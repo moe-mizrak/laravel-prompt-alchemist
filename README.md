@@ -1,2 +1,4 @@
 # laravel-prompt-alchemist
-Laravel package for function calling - todo add better description
+Laravel Package for Tool Use (Function Calling)
+
+# 🚧 Under Construction 🚧
