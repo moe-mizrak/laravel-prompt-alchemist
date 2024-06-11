@@ -12,7 +12,6 @@ abstract class PromptAlchemistAPI
 {
     /**
      * PromptAlchemistAPI constructor.
-     * todo: remove if unnecessary, remove all abstract class if unnecessary since constructor is empty
      */
     public function __construct() {}
 }
