@@ -1,0 +1,64 @@
+- function_name: getFinancialData
+  result:
+    - name: transactions
+      type: array
+      value:
+        - amount:
+          date: 2023-02-02
+          description: shoes
+    - name: totalAmount
+      type: integer
+      value: 1234
+- function_name: getCreditScore
+  result:
+    - name: creditScore
+      type: float
+      value: 0.5
+    - name: summary
+      type: string
+      value: reliable
+- function_name: getAccountBalance
+  result:
+    - name: currentBalance
+      type: integer
+      value: 12502
+    - name: status
+      type: string
+      value: active
+- function_name: getUserInfo
+  result:
+    - name: userId
+      type: integer
+      value: 1111
+    - name: userName
+      type: string
+      value: Boolean Bob
+    - name: userAddress
+      type: string
+      value: Jupiter
+    - name: status
+      type: string
+      value: active
+    - name: userSiblings
+      type: array
+      value:
+        spouse:
+          - name: userId
+            type: integer
+            value: 1112
+          - name: userName
+            type: string
+            value: Float Bob
+          - name: status
+            type: string
+            value: active
+        first_child:
+          - name: userId
+            type: integer
+            value: 1113
+          - name: userName
+            type: string
+            value: Jimmy Bob
+          - name: status
+            type: string
+            value: active
