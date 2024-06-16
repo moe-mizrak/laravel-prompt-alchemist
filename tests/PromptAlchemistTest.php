@@ -7,12 +7,20 @@ use MoeMizrak\LaravelOpenrouter\DTO\ChatData;
 use MoeMizrak\LaravelOpenrouter\DTO\MessageData;
 use MoeMizrak\LaravelOpenrouter\DTO\ResponseData;
 use MoeMizrak\LaravelOpenrouter\Types\RoleType;
+use MoeMizrak\LaravelPromptAlchemist\DTO\ErrorData;
+use MoeMizrak\LaravelPromptAlchemist\DTO\FunctionData;
+use MoeMizrak\LaravelPromptAlchemist\DTO\ParameterData;
+use MoeMizrak\LaravelPromptAlchemist\DTO\ReturnData;
 use MoeMizrak\LaravelPromptAlchemist\PromptAlchemistRequest;
+use MoeMizrak\LaravelPromptAlchemist\Types\VisibilityType;
 use Spatie\DataTransferObject\Exceptions\UnknownProperties;
+use Symfony\Component\Yaml\Yaml;
 
 class PromptAlchemistTest extends TestCase
 {
     private PromptAlchemistRequest $request;
+    private string|object $class;
+    private string $testYmlFileName;
 
     /**
      * Setup the test environment.
@@ -31,8 +39,30 @@ class PromptAlchemistTest extends TestCase
             'content' => $this->content,
             'role' => RoleType::USER,
         ]);
+        $this->class = Example::class;
+        $this->testYmlFileName = __DIR__ . '/../resources/test_functions.yml';
 
         $this->request = $this->app->make(PromptAlchemistRequest::class);
+    }
+
+    /**
+     * Deletes a temporary yml file with "test" in the name.
+     * Caution! Use this method carefully
+     *
+     * @param string $fileName The filename to check and delete
+     *
+     * @return void
+     */
+    private function deleteYmlFile(string $fileName): void
+    {
+        // Check if file exists and has ".yml" extension
+        if (file_exists($fileName) && pathinfo($fileName, PATHINFO_EXTENSION) === 'yml') {
+            // Check if filename contains "test" (case-insensitive)
+            if (stripos($fileName, 'test') !== false) {
+                // Delete the file
+                unlink($fileName);
+            }
+        }
     }
 
     /**
@@ -104,14 +134,14 @@ class PromptAlchemistTest extends TestCase
         $content = $this->request->preparePromptFunctionPayload($this->content);
         $messageData = new MessageData([
             'content' => json_encode($content),
-            'role' => RoleType::USER,
+            'role'    => RoleType::USER,
         ]);
         $chatData = new ChatData([
             'messages' => [
                 $messageData,
             ],
-            'model'      => $this->model,
-            'max_tokens' => 900,
+            'model'       => $this->model,
+            'max_tokens'  => 900,
             'temperature' => 0.1,
         ]);
 
@@ -247,9 +277,9 @@ class PromptAlchemistTest extends TestCase
         $llmReturnedFunction = [
             "function_name" => "getFinancialData",
             "parameters" => [
-                [ "name" => "userId", "type" => "integer"],
-                [ "name" => "startDate", "type" => "date"],
-                [ "name" => "endDate", "type" => "date"],
+                [ "name" => "userId", "type" => "int"],
+                [ "name" => "startDate", "type" => "string"],
+                [ "name" => "endDate", "type" => "string"],
             ]
         ];
 
@@ -269,8 +299,8 @@ class PromptAlchemistTest extends TestCase
         $llmReturnedFunction = [
             "function_name" => "getFinancialData",
             "parameters" => [
-                [ "name" => "startDate", "type" => "date"],
-                [ "name" => "endDate", "type" => "date"],
+                [ "name" => "startDate", "type" => "string"],
+                [ "name" => "endDate", "type" => "string"],
             ]
         ];
 
@@ -291,10 +321,10 @@ class PromptAlchemistTest extends TestCase
         $llmReturnedFunction = [
             "function_name" => "getFinancialData",
             "parameters" => [
-                [ "name" => "userId", "type" => "integer"],
-                [ "name" => "randomName", "type" => "integer"], // unexpected parameter
-                [ "name" => "startDate", "type" => "date"],
-                [ "name" => "endDate", "type" => "date"],
+                [ "name" => "userId", "type" => "int"],
+                [ "name" => "randomName", "type" => "int"], // unexpected parameter
+                [ "name" => "startDate", "type" => "string"],
+                [ "name" => "endDate", "type" => "string"],
             ]
         ];
 
@@ -304,6 +334,218 @@ class PromptAlchemistTest extends TestCase
         /* ASSERT */
         $this->assertEquals(400, $validationResponse->code);
         $this->assertEquals('Function signature is wrong, unexpected parameter(s) randomName', $validationResponse->message);
+    }
+
+    /**
+     * @test
+     */
+    public function it_validates_function_signature_and_returns_error_when_function_name_NOT_exists()
+    {
+        /* SETUP */
+        $invalidFunctionName = 'invalidFunction';
+        $llmReturnedFunction = [
+            "function_name" => $invalidFunctionName,
+            "parameters" => []
+        ];
+
+        /* EXECUTE */
+        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunction);
+
+        /* ASSERT */
+        $this->assertEquals(400, $validationResponse->code);
+        $this->assertEquals('Function signature is wrong, unexpected function name '. $invalidFunctionName, $validationResponse->message);
+    }
+
+    /**
+     * @test
+     */
+    public function it_generates_function_list_from_class_and_desired_function_names()
+    {
+        /* SETUP */
+        $functions = [
+            'detailedDocBlockFunction',
+            'privateFunction',
+            'publicFunction',
+            'functionWithMissingTypeHint',
+        ];
+
+        /* EXECUTE */
+        $result = $this->request->generateFunctionList($this->class, $functions, $this->testYmlFileName);
+
+        /* ASSERT */
+        $this->assertTrue($result);
+
+        /* CLEANUP */
+        $this->deleteYmlFile($this->testYmlFileName);
+    }
+
+    /**
+     * @test
+     */
+    public function it_overwrites_function_docblock_if_descriptions_sent()
+    {
+        /* SETUP */
+        // this function is for the overwriting descriptions
+        $functionDataA = new FunctionData([
+            'function_name' => 'detailedDocBlockFunction',
+            'parameters' => [
+                new ParameterData([
+                    'name' => 'stringParam',
+                    'type' => 'string',
+                    'required' => true,
+                    'description' => 'Overwritten stringParam param description',
+                    'example' => 'Overwritten stringParam example',
+                    'default' => 'Overwritten default value'
+                ]),
+                new ParameterData([
+                    'name' => 'intParam',
+                    'type' => 'integer',
+                    'required' => true,
+                    'description' => 'Overwritten intParam param description',
+                    'example' => 'Overwritten intParam example',
+                ]),
+            ],
+            'visibility' => VisibilityType::PUBLIC,
+            'description' => 'Overwritten function description',
+            'return' => new ReturnData([
+                'type' => 'string',
+                'description' => 'Overwritten function return description',
+                'example' => 'Overwritten function return value example'
+            ]),
+        ]);
+        // this function is for the setting missing descriptions while using function predefined descriptions
+        $functionDataB = new FunctionData([
+            'function_name' => 'detailedDocBlockFunctionWithSomeMissingDocBlock',
+            'parameters' => [
+                new ParameterData([
+                    'name' =>'stringParam',
+                    'description' => 'Adds missing stringParam param description for functionDataB',
+                    'example' => 'Adds missing stringParam example for functionDataB',
+                    'default' => 'Adds default value for functionDataB'
+                ]),
+                new ParameterData([
+                    'name' => 'intParam',
+                    'description' => 'Adds missing intParam param description for functionDataB',
+                    'example' => 'Adds missing intParam example',
+                ]),
+            ],
+            'return' => new ReturnData([
+                'example' => 'Adds missing function return value example for functionDataB'
+            ]),
+        ]);
+        $functions = [$functionDataA, $functionDataB];
+
+        /* EXECUTE */
+        $result = $this->request->generateFunctionList($this->class, $functions, $this->testYmlFileName);
+
+        /* ASSERT */
+        $testYmlFunctionList = Yaml::parseFile($this->testYmlFileName);
+        $this->assertTrue($result);
+        // functionDataA Assertions
+        $this->assertEquals($functions[0]->function_name, Arr::get($testYmlFunctionList[0], 'function_name'));
+        $this->assertEquals('stringParam', Arr::get($testYmlFunctionList[0]['parameters'][0], 'name'));
+        $this->assertEquals('Overwritten stringParam param description', Arr::get($testYmlFunctionList[0]['parameters'][0], 'description'));
+        $this->assertEquals('Overwritten stringParam example', Arr::get($testYmlFunctionList[0]['parameters'][0], 'example'));
+        $this->assertEquals('Overwritten default value', Arr::get($testYmlFunctionList[0]['parameters'][0], 'default'));
+        $this->assertEquals('intParam', Arr::get($testYmlFunctionList[0]['parameters'][1], 'name'));
+        $this->assertEquals('Overwritten intParam param description', Arr::get($testYmlFunctionList[0]['parameters'][1], 'description'));
+        $this->assertEquals('Overwritten intParam example', Arr::get($testYmlFunctionList[0]['parameters'][1], 'example'));
+        // functionDataB Assertions
+        $this->assertEquals($functions[1]->function_name, Arr::get($testYmlFunctionList[1], 'function_name'));
+        $this->assertEquals('stringParam', Arr::get($testYmlFunctionList[1]['parameters'][0], 'name'));
+        $this->assertEquals('Adds missing stringParam param description for functionDataB', Arr::get($testYmlFunctionList[1]['parameters'][0], 'description'));
+        $this->assertEquals('Adds missing stringParam example for functionDataB', Arr::get($testYmlFunctionList[1]['parameters'][0], 'example'));
+        $this->assertEquals('Adds default value for functionDataB', Arr::get($testYmlFunctionList[1]['parameters'][0], 'default'));
+        $this->assertEquals('intParam', Arr::get($testYmlFunctionList[1]['parameters'][1], 'name'));
+        $this->assertEquals('Adds missing intParam param description for functionDataB', Arr::get($testYmlFunctionList[1]['parameters'][1], 'description'));
+        $this->assertEquals('Adds missing intParam example', Arr::get($testYmlFunctionList[1]['parameters'][1], 'example'));
+        $this->assertEquals(VisibilityType::PUBLIC, Arr::get($testYmlFunctionList[1], 'visibility'));
+
+        /* CLEANUP */
+        $this->deleteYmlFile($this->testYmlFileName);
+    }
+
+    /**
+     * @test
+     */
+    public function it_successfully_sets_default_value_for_parameter()
+    {
+        /* SETUP */
+        // this function is for the overwriting descriptions
+        $functionDataA = new FunctionData([
+            'function_name' => 'detailedDocBlockFunction',
+        ]);
+        $functions = [$functionDataA];
+
+        /* EXECUTE */
+        $result = $this->request->generateFunctionList($this->class, $functions, $this->testYmlFileName);
+
+        /* ASSERT */
+        $testYmlFunctionList = Yaml::parseFile($this->testYmlFileName);
+        $this->assertTrue($result);
+        $this->assertEquals($functions[0]->function_name, Arr::get($testYmlFunctionList[0], 'function_name'));
+        $this->assertNotNull(Arr::get($testYmlFunctionList[0], 'parameters'));
+        $this->assertEquals('stringParam', Arr::get($testYmlFunctionList[0]['parameters'][0], 'name'));
+        $this->assertEquals('string', Arr::get($testYmlFunctionList[0]['parameters'][0], 'type'));
+        $this->assertTrue(Arr::get($testYmlFunctionList[0]['parameters'][0], 'required'));
+        $this->assertEquals('intParam', Arr::get($testYmlFunctionList[0]['parameters'][1], 'name'));
+        $this->assertEquals('int', Arr::get($testYmlFunctionList[0]['parameters'][1], 'type'));
+        $this->assertFalse(Arr::get($testYmlFunctionList[0]['parameters'][1], 'required'));
+        $this->assertEquals(2, Arr::get($testYmlFunctionList[0]['parameters'][1], 'default'));
+        $this->assertEquals(VisibilityType::PUBLIC, Arr::get($testYmlFunctionList[0], 'visibility'));
+
+        /* CLEANUP */
+        $this->deleteYmlFile($this->testYmlFileName);
+    }
+
+    /**
+     * @test
+     */
+    public function it_successfully_generates_function_list_when_no_info_is_provided_by_user_and_no_predefined_function_info_exists()
+    {
+        /* SETUP */
+        // this function is for the overwriting descriptions
+        $functions = ['noExtraInfoProvidedFunction'];
+
+        /* EXECUTE */
+        $result = $this->request->generateFunctionList($this->class, $functions, $this->testYmlFileName);
+
+        /* ASSERT */
+        $testYmlFunctionList = Yaml::parseFile($this->testYmlFileName);
+        $this->assertTrue($result);
+        $this->assertEquals($functions[0], Arr::get($testYmlFunctionList[0], 'function_name'));
+        $this->assertNotNull(Arr::get($testYmlFunctionList[0], 'parameters'));
+        $this->assertEquals('stringParam', Arr::get($testYmlFunctionList[0]['parameters'][0], 'name'));
+        $this->assertEquals('mixed', Arr::get($testYmlFunctionList[0]['parameters'][0], 'type'));
+        $this->assertTrue(Arr::get($testYmlFunctionList[0]['parameters'][0], 'required'));
+        $this->assertEquals('intParam', Arr::get($testYmlFunctionList[0]['parameters'][1], 'name'));
+        $this->assertEquals('mixed', Arr::get($testYmlFunctionList[0]['parameters'][1], 'type'));
+        $this->assertTrue(Arr::get($testYmlFunctionList[0]['parameters'][1], 'required'));
+        $this->assertEquals(VisibilityType::PUBLIC, Arr::get($testYmlFunctionList[0], 'visibility'));
+
+        /* CLEANUP */
+        $this->deleteYmlFile($this->testYmlFileName);
+    }
+
+    /**
+     * @test
+     */
+    public function it_successfully_responds_with_error_data_when_invalid_function_name_is_sent_to_generate_function_list()
+    {
+        /* SETUP */
+        // this function is for the overwriting descriptions
+        $functions = ['invalidFunctionName'];
+
+        /* EXECUTE */
+        $response = $this->request->generateFunctionList($this->class, $functions, $this->testYmlFileName);
+
+        /* ASSERT */
+        $this->assertInstanceOf(ErrorData::class, $response);
+        $this->assertEquals(400, $response->code);
+        $this->assertEquals("Function {$functions[0]} does not exist in class {$this->class}", $response->message);
+
+        /* CLEANUP */
+        $this->deleteYmlFile($this->testYmlFileName);
     }
 
     /**
@@ -324,10 +566,9 @@ class PromptAlchemistTest extends TestCase
     /**
      * TODO:
      * Things that will be developed and should be considered:
-     * - handle the case there is no function is found
+     * - DONE handle the case there is no function is found
      * - order of params also matter for functions.yml
-     * - for functions request to ai provider, i am also getting value in response while in ContentPayloadTemplate it is strictly asked to use schema, so play with instructions
-     * - ResponsePayloadTemplate instructions can also be retrieved dynamically from the config so when it is necessary to make changes in instructions for specific ai provider, then it will not require package changes
+     * - for functions request to LLM provider, i am also getting value in response while in ContentPayloadTemplate it is strictly asked to use schema, so play with instructions
      * - In case llm returns with the response that is missing some required parameter, there can be a feedback for it in case of missing field, another llm request is made or request is made with the response to ask for correcting it
      * - callFunctions which makes the function calls, function with its parameters should be provided so that it will be able to make the function call.
      * - Be cautious! adding more to functions.yml will increase the cost of llm requests
@@ -335,6 +576,7 @@ class PromptAlchemistTest extends TestCase
      * - PromptAlchemistAPI => remove if unnecessary since constructor is empty
      *
      * - add method names of request to facade class docblock, so that we wil be able to call them with facade
+     * - add readme that functions can be either names array or functionData array, if your project is written in a good way, you can just provide the array of names as in it_generates_function_list_from_class_and_desired_function_names
      */
 
     /**

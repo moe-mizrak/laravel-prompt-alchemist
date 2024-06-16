@@ -1,108 +1,30 @@
-- function_name: getFinancialData
-  description: Retrieves financial data for a specific user and timeframe.
-  parameters:
-    - name: userId
-      type: integer
-      description: The unique identifier for the user.
-      required: true
-      example: 12345
-    - name: startDate
-      type: date
-      description: The starting date for the timeframe (inclusive).
-      required: true
-      example: '2023-01-01'
-    - name: endDate
-      type: date
-      description: The ending date for the timeframe (inclusive).
-      required: true
-      example: '2023-01-31'
-  return:
-    type: object
-    description: |
-      An object containing details like totalAmount, transactions (array), and other relevant financial data.
-- function_name: categorizeTransactions
-  description: Categorizes a list of transactions based on predefined rules or machine learning models.
-  parameters:
-    - name: transactions
-      type: array
-      description: An array of transactions with details like amount, date, and description.
-      required: true
-      example:
-        - amount: 100
-          date: '2023-01-01'
-          description: Groceries
-        - amount: 50
-          date: '2023-01-02'
-          description: Entertainment
-  return:
-    type: array
-    description: |
-      An array of transactions with an added "category" field if successfully categorized. Each transaction may also include a "confidenceScore" field.
-    example:
-      - amount: 100
-        date: '2023-01-01'
-        description: Groceries
-        category: Food
-        confidenceScore: 0.95
-      - amount: 50
-        date: '2023-01-02'
-        description: Entertainment
-        category: Leisure
-        confidenceScore: 0.80
-- function_name: getTopCategories
-  description: Finds the top spending categories from a list of categorized transactions.
-  parameters:
-    - name: transactions
-      type: array
-      description: An array of categorized transactions.
-      required: true
-      example:
-        - amount: 100
-          date: '2023-01-01'
-          description: Groceries
-          category: Food
-        - amount: 50
-          date: '2023-01-02'
-          description: Entertainment
-          category: Leisure
-  return:
-    type: object
-    description: |
-      A DTO object containing details of the top spending category. This object includes properties like:
-        - name (string): The name of the top spending category (e.g., "Groceries").
-        - totalAmount (float): The total amount spent in the top category.
-    example:
-      name: Food
-      totalAmount: 300.00
-- function_name: getCreditScore
-  description: Retrieves the current credit score for a specific user.
-  parameters:
-    - name: userId
-      type: integer
-      description: The unique identifier of the user.
-      required: true
-      example: 67890
-  return:
-    type: object
-    description: |
-      An object containing the credit score, credit report summary, and any relevant notes.
-    example:
-      creditScore: 750
-      creditReportSummary: 'positive'
-- function_name: getAccountBalance
-  description: Retrieves the current balance for a specific user account.
-  parameters:
-    - name: accountId
-      type: integer
-      description: The unique identifier of the account.
-      required: true
-      example: 98765
-    - name: asOfDate
-      type: date
-      description: The date for which the balance is requested.
-      required: false
-      example: '2023-06-01'
-  return:
-    type: object
-    description: |
-      An object containing the current balance and the account status.
+-
+  function_name: getFinancialData
+  parameters: [{ name: userId, type: int, required: true, description: 'The unique identifier for the user.', example: 12345 }, { name: startDate, type: string, required: true, description: 'The starting date for the timeframe (inclusive).', example: '2023-01-01' }, { name: endDate, type: string, required: true, description: 'The ending date for the timeframe (inclusive).', example: '2023-01-31' }]
+  visibility: public
+  description: 'Retrieves financial data for a specific user and timeframe. '
+  return: { type: object, description: 'An object containing details like totalAmount, transactions (array), and other relevant financial data.' }
+-
+  function_name: categorizeTransactions
+  parameters: [{ name: transactions, type: array, required: true, description: 'An array of transactions with details like amount, date, and description.', example: [{ amount: 100, date: '2023-01-01', description: 'Groceries' }, { amount: 50, date: '2023-01-02', description: 'Entertainment' }] }]
+  visibility: public
+  description: 'Categorizes a list of transactions based on predefined rules or machine learning models. '
+  return: { type: array, description: 'An array of transactions with an added "category" field if successfully categorized. Each transaction may also include a "confidenceScore" field.', example: [{ amount: 100, date: '2023-01-01', description: 'Groceries', category: 'Food', confidenceScore: 0.95 }, { amount: 50, date: '2023-01-02', description: 'Entertainment', category: 'Leisure', confidenceScore: 0.8 }] }
+-
+  function_name: getTopCategories
+  parameters: [{ name: transactions, type: array, required: true, description: 'An array of categorized transactions.', example: [{ amount: 100, date: '2023-01-01', description: 'Groceries', category: 'Food' }, { amount: 50, date: '2023-01-02', description: 'Entertainment', category: 'Leisure' }] }]
+  visibility: public
+  description: 'Finds the top spending categories from a list of categorized transactions. '
+  return: { type: object, description: 'A DTO object containing details of the top spending category.', example: { name: 'Food', totalAmount: 300.0 } }
+-
+  function_name: getCreditScore
+  parameters: [{ name: userId, type: int, required: true, description: 'The unique identifier of the user.', example: 67890 }]
+  visibility: public
+  description: 'Retrieves the current credit score for a specific user. '
+  return: { type: object, description: 'An object containing the credit score, credit report summary, and any relevant notes.', example: { creditScore: 750, creditReportSummary: 'positive' } }
+-
+  function_name: getAccountBalance
+  parameters: [{ name: accountId, type: int, required: true, description: 'The unique identifier of the account.', example: 98765 }, { name: asOfDate, type: string, required: false, description: 'The date for which the balance is requested (optional).', example: '2023-06-01' }]
+  visibility: public
+  description: 'Retrieves the current balance for a specific user account. '
+  return: { type: object, description: 'An object containing the current balance and the account status.' }
