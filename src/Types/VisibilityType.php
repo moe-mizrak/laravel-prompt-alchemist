@@ -30,4 +30,25 @@ class VisibilityType
      * @var string
      */
     const PROTECTED = 'protected';
+
+    /**
+     * Static visibility type.
+     *
+     * @var string
+     */
+    const STATIC = 'static';
+
+    /**
+     * Abstract visibility type.
+     *
+     * @var string
+     */
+    const ABSTRACT = 'abstract';
+
+    /**
+     * Final visibility type.
+     *
+     * @var string
+     */
+    const FINAL = 'final';
 }

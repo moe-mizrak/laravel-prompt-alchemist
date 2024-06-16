@@ -12,7 +12,7 @@ And adding it into config file as:
 ```php
     return [
         'env_variables' => [
-            // here env variables for ai provider
+            // here env variables for llm provider
         ],
         'functions' => Yaml::parseFile(__DIR__.'/../resources/functions.yml'),
     ];
@@ -23,7 +23,7 @@ Or add them directly to config file as follows:
 ```php
     return [
         'env_variables' => [
-            // here env variables for ai provider
+            // here env variables for llm provider
         ],
         'functions' => [
             'getFinancialData' => [

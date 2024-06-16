@@ -1,26 +1,15 @@
-- function_name: getFinancialData
-  parameters:
-    - name: userId
-      type: integer
-    - name: startDate
-      type: date
-    - name: endDate
-      type: date
-- function_name: categorizeTransactions
-  parameters:
-    - name: transactions
-      type: array
-- function_name: getTopCategories
-  parameters:
-    - name: transactions
-      type: array
-- function_name: getCreditScore
-  parameters:
-    - name: userId
-      type: integer
-- function_name: getAccountBalance
-  parameters:
-    - name: accountId
-      type: integer
-    - name: asOfDate
-      type: date
+-
+  function_name: getFinancialData
+  parameters: [{ name: userId, type: int }, { name: startDate, type: string }, { name: endDate, type: string }]
+-
+  function_name: categorizeTransactions
+  parameters: [{ name: transactions, type: array }]
+-
+  function_name: getTopCategories
+  parameters: [{ name: transactions, type: array }]
+-
+  function_name: getCreditScore
+  parameters: [{ name: userId, type: int }]
+-
+  function_name: getAccountBalance
+  parameters: [{ name: accountId, type: int }, { name: asOfDate, type: string }]

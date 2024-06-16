@@ -16,9 +16,9 @@ class FunctionData extends DataTransferObject
     /**
      * Name of the function.
      *
-     * @var string
+     * @var string|null
      */
-    public string $function_name;
+    public ?string $function_name;
 
     /**
      * Parameters of the function.
