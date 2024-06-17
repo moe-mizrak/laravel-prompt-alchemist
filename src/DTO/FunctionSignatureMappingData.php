@@ -64,4 +64,9 @@ class FunctionSignatureMappingData extends DataTransferObject
      * @var MappingData|null An example value for the parameter
      */
     public ?MappingData $parameter_example;
+
+    /**
+     * @var MappingData|null The class name that function belongs to.
+     */
+    public ?MappingData $class_name;
 }

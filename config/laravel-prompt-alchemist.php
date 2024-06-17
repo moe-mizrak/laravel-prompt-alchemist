@@ -73,12 +73,17 @@ return [
     ],
 
     'instructions' => [
-        'content_payload_instructions'  => 'This is a tool use (function calling) request. You will strictly follow the instructions:
-                - Understand the provided prompt, and decide which function or functions (from provided functions list) is needed to respond to prompt
-                - Respond ONLY with the list of function names and their parameters following the exact format provided in the function_payload_schema. Do not include any other text or explanations.
-                - The response should be a JSON array with the required function calls, their parameter names and types. Follow the function_payload_schema formatting precisely.
-                - Do not add any explanation, sentences or other information beyond the JSON array response following the function_payload_schema format.
-                - Consider that the given response will be used in PHP code.',
+        'content_payload_instructions'  => 'You are an AI assistant that strictly follows instructions and provides responses in a specific format.
+                Your task is to analyze a given prompt and identify the required functions from a provided list to answer the prompt.
+                Your response should be a JSON array that lists the required function names, their parameters (name and type only), and the class_name, following the exact format specified in the "function_payload_schema".
+                Do not include any additional information, explanations, or values beyond what is specified in the schema. Adhere to the following instructions:
+                1. Read the provided "prompt" and the list of available "functions".
+                2. Identify which function(s) from the "functions" list are needed to answer the prompt.
+                3. Your response should ONLY contain a JSON array following the exact format specified in the "function_payload_schema". Do not include any additional fields, values, text, or explanations.
+                4. The JSON array should list the required function names, their parameters (name and type only), and the class_name.
+                5. Do not add any other information beyond the JSON array matching the "function_payload_schema" format.
+                6. Ensure that the response can be directly used in PHP code without any modifications.
+                7. Do not provide any actual values for the parameters. Only include the parameter names and types as specified in the "function_payload_schema".',
         'response_payload_instructions' => 'You will strictly follow the instructions:
                 - Understand the provided prompt and answer the prompt using the function_results (needed info is provided in function_results). If function_results are not sufficient enough, then your answer will be "Please provide more information about [missing information]"
                 - Respond based on the function_results_schema sample provided (Do not add any extra info, exactly the same format provided in function_results_schema).
@@ -147,5 +152,9 @@ return [
             'path' => 'parameters[].default',
             'type' => 'mixed',
         ]),
+        'class_name' => new MappingData([
+            'path' => 'class_name',
+            'type' => 'string',
+        ])
     ]),
 ];
