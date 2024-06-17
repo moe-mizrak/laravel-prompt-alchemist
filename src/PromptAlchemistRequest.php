@@ -106,7 +106,7 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
         $llmReturnedFunctionData = $this->formLlmReturnedFunctionData($signatureMappingData, $llmReturnedFunction);
 
         // Formed callable function data (FunctionData).
-        $callableFunctionData = $this->formCallableFunctionData($signatureMappingData, $llmReturnedFunctionData->function_name);
+        $callableFunctionData = $this->formCallableFunctionData($signatureMappingData, $llmReturnedFunctionData);
 
         return $this->validate($callableFunctionData, $llmReturnedFunctionData);
     }
@@ -126,6 +126,8 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
         $llmReturnedFunctionName = Arr::get($llmReturnedFunction, $signatureMappingData->function_name->path);
         // LLM returned parameters.
         $llmReturnedParameters = Arr::get($llmReturnedFunction, $signatureMappingData->parameters->path);
+        // LLm returned class name of the function
+        $llmReturnedClassName= Arr::get($llmReturnedFunction, $signatureMappingData->class_name->path);
 
         // Loop through the LLm returned parameters and set parameter name and type.
         $key = 0;
@@ -142,6 +144,7 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
         return new FunctionData([
             'function_name' => $llmReturnedFunctionName,
             'parameters'    => $parameters,
+            'class_name'    => $llmReturnedClassName
         ]);
     }
 
@@ -149,21 +152,24 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
      * Forms callable function data based on the signature mapping.
      *
      * @param FunctionSignatureMappingData $signatureMappingData - This is for the signature mapping (path and type info of fields in array)
-     * @param string $llmReturnedFunctionName - This is for retrieving the correct function from function list by comparing with $llmReturnedFunctionName.
+     * @param FunctionData $llmReturnedFunctionData - This is for retrieving the correct function from function list by comparing with $llmReturnedFunctionName and $llmReturnedClassName.
      *
      * @return FunctionData
      * @throws UnknownProperties
      */
-    private function formCallableFunctionData(FunctionSignatureMappingData $signatureMappingData, string $llmReturnedFunctionName): FunctionData
+    private function formCallableFunctionData(FunctionSignatureMappingData $signatureMappingData, FunctionData $llmReturnedFunctionData): FunctionData
     {
         // Function list with signatures (names, parameters etc.). This is the function that will be formed in function data.
         $callableFunctions = Yaml::parseFile(config('laravel-prompt-alchemist.functions_yml_path'));
         $callableFunction = null;
+        $llmReturnedFunctionName = $llmReturnedFunctionData->function_name;
+        $llmReturnedClassName = $llmReturnedFunctionData->class_name;
 
         // Loop through function list and find the same function with the LLM returned function.
         foreach ($callableFunctions as $function) {
             $callableFunctionName = Arr::get($function, $signatureMappingData->function_name->path);
-            if ($callableFunctionName === $llmReturnedFunctionName) {
+            $callableClassName = Arr::get($function, $signatureMappingData->class_name->path);
+            if ($callableFunctionName === $llmReturnedFunctionName && $callableClassName === $llmReturnedClassName) {
                 $callableFunction = $function;
                 break;
             }
@@ -188,6 +194,7 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
         return new FunctionData([
             'function_name' => Arr::get($callableFunction, $signatureMappingData->function_name->path),
             'parameters'    => $parameters,
+            'class_name'    => Arr::get($callableFunction, $signatureMappingData->class_name->path),
         ]);
     }
 
@@ -215,11 +222,14 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
      */
     private function validate(FunctionData $callableFunctionData, FunctionData $llmReturnedFunctionData): bool|ErrorData
     {
-        // If there are any mismatched parameter name, return the error along with the mismatched parameter names.
-        if ($callableFunctionData->function_name !== $llmReturnedFunctionData->function_name) {
+        // If there are any mismatched function name / class name, return the error along with the mismatched function name / class name.
+        if (
+            $callableFunctionData->function_name !== $llmReturnedFunctionData->function_name ||
+            $callableFunctionData->class_name !== $llmReturnedFunctionData->class_name
+        ) {
             return new ErrorData([
                 'code'    => 400,
-                'message' => 'Function signature is wrong, unexpected function name '. $llmReturnedFunctionData->function_name,
+                'message' => 'Function signature is wrong, unexpected function name '. $llmReturnedFunctionData->function_name . ' or class name '.$llmReturnedFunctionData->class_name,
             ]);
         }
 
@@ -330,6 +340,7 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
                 'description'   => $functionDescription,
                 'parameters'    => $functionParameters,
                 'return'        => $returnData,
+                'class_name'    => (string) $class
             ]);
 
             $functionList[] = $this->array_filter_recursive($functionData->toArray());
@@ -522,6 +533,7 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
      *
      * @param string $fileName
      * @param array $functionList
+     *
      * @return bool
      */
     private function writeToYmlFile(string $fileName, array $functionList): bool
@@ -534,8 +546,8 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
             touch($fileName);
         }
 
-        // Write function list to a YAML file.
-        return false !== file_put_contents($fileName, $yml);
+        // Write function list to a YAML file (append mode).
+        return false !== file_put_contents($fileName, $yml, FILE_APPEND);
     }
 
     /**

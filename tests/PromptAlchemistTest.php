@@ -280,7 +280,8 @@ class PromptAlchemistTest extends TestCase
                 [ "name" => "userId", "type" => "int"],
                 [ "name" => "startDate", "type" => "string"],
                 [ "name" => "endDate", "type" => "string"],
-            ]
+            ],
+            'class_name' => (string) $this->class
         ];
 
         /* EXECUTE */
@@ -288,6 +289,31 @@ class PromptAlchemistTest extends TestCase
 
         /* ASSERT */
         $this->assertTrue($validationResponse);
+    }
+
+    /**
+     * @test
+     */
+    public function it_responds_with_error_data_when_class_name_is_invalid()
+    {
+        /* SETUP */
+        $className = 'InvalidClassName';
+        $llmReturnedFunction = [
+            "function_name" => "getFinancialData",
+            "parameters" => [
+                [ "name" => "userId", "type" => "int"],
+                [ "name" => "startDate", "type" => "string"],
+                [ "name" => "endDate", "type" => "string"],
+            ],
+            'class_name' => $className
+        ];
+
+        /* EXECUTE */
+        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunction);
+
+        /* ASSERT */
+        $this->assertEquals(400, $validationResponse->code);
+        $this->assertEquals("Function signature is wrong, unexpected function name getFinancialData or class name {$className}", $validationResponse->message);
     }
 
     /**
@@ -301,7 +327,8 @@ class PromptAlchemistTest extends TestCase
             "parameters" => [
                 [ "name" => "startDate", "type" => "string"],
                 [ "name" => "endDate", "type" => "string"],
-            ]
+            ],
+            'class_name' => (string) $this->class
         ];
 
         /* EXECUTE */
@@ -325,7 +352,8 @@ class PromptAlchemistTest extends TestCase
                 [ "name" => "randomName", "type" => "int"], // unexpected parameter
                 [ "name" => "startDate", "type" => "string"],
                 [ "name" => "endDate", "type" => "string"],
-            ]
+            ],
+            "class_name" => (string) $this->class
         ];
 
         /* EXECUTE */
@@ -345,7 +373,8 @@ class PromptAlchemistTest extends TestCase
         $invalidFunctionName = 'invalidFunction';
         $llmReturnedFunction = [
             "function_name" => $invalidFunctionName,
-            "parameters" => []
+            "parameters" => [],
+            "class_name" => (string) $this->class
         ];
 
         /* EXECUTE */
@@ -353,7 +382,7 @@ class PromptAlchemistTest extends TestCase
 
         /* ASSERT */
         $this->assertEquals(400, $validationResponse->code);
-        $this->assertEquals('Function signature is wrong, unexpected function name '. $invalidFunctionName, $validationResponse->message);
+        $this->assertEquals("Function signature is wrong, unexpected function name {$invalidFunctionName} or class name {$this->class}", $validationResponse->message);
     }
 
     /**
@@ -374,6 +403,39 @@ class PromptAlchemistTest extends TestCase
 
         /* ASSERT */
         $this->assertTrue($result);
+
+        /* CLEANUP */
+        $this->deleteYmlFile($this->testYmlFileName);
+    }
+
+    /**
+     * @test
+     */
+    public function it_generates_function_list_from_multiple_classes_just_from_function_names()
+    {
+        /* SETUP */
+        $functionsOfExampleClass = [
+            'detailedDocBlockFunction',
+            'privateFunction',
+        ];
+        $functionsOfExampleFinanceClass = [
+            'getFinancialData',
+            'categorizeTransactions',
+        ];
+        $classExampleFinance = ExampleFinance::class;
+
+        /* EXECUTE */
+        $resultExampleClass = $this->request->generateFunctionList($this->class, $functionsOfExampleClass, $this->testYmlFileName);
+        $resultExampleFianceClass = $this->request->generateFunctionList($classExampleFinance, $functionsOfExampleFinanceClass, $this->testYmlFileName);
+
+        /* ASSERT */
+        $testYmlFunctionList = Yaml::parseFile($this->testYmlFileName);
+        $this->assertTrue($resultExampleClass);
+        $this->assertTrue($resultExampleFianceClass);
+        $this->assertEquals($functionsOfExampleClass[0], Arr::get($testYmlFunctionList[0], 'function_name'));
+        $this->assertEquals($functionsOfExampleClass[1], Arr::get($testYmlFunctionList[1], 'function_name'));
+        $this->assertEquals($functionsOfExampleFinanceClass[0], Arr::get($testYmlFunctionList[2], 'function_name'));
+        $this->assertEquals($functionsOfExampleFinanceClass[1], Arr::get($testYmlFunctionList[3], 'function_name'));
 
         /* CLEANUP */
         $this->deleteYmlFile($this->testYmlFileName);

@@ -49,4 +49,11 @@ class FunctionData extends DataTransferObject
      * @var ReturnData|null
      */
     public ?ReturnData $return;
+
+    /**
+     * Class name that function belongs to.
+     *
+     * @var string|null
+     */
+    public ?string $class_name;
 }

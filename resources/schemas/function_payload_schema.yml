@@ -1,15 +1,20 @@
 -
   function_name: getFinancialData
   parameters: [{ name: userId, type: int }, { name: startDate, type: string }, { name: endDate, type: string }]
+  class_name: MoeMizrak\LaravelPromptAlchemist\Tests\ExampleA
 -
   function_name: categorizeTransactions
   parameters: [{ name: transactions, type: array }]
+  class_name: MoeMizrak\LaravelPromptAlchemist\Tests\ExampleB
 -
   function_name: getTopCategories
   parameters: [{ name: transactions, type: array }]
+  class_name: MoeMizrak\LaravelPromptAlchemist\Tests\ExampleC
 -
   function_name: getCreditScore
   parameters: [{ name: userId, type: int }]
+  class_name: MoeMizrak\LaravelPromptAlchemist\Tests\ExampleD
 -
   function_name: getAccountBalance
   parameters: [{ name: accountId, type: int }, { name: asOfDate, type: string }]
+  class_name: MoeMizrak\LaravelPromptAlchemist\Tests\ExampleE
