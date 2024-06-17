@@ -4,8 +4,10 @@ namespace MoeMizrak\LaravelPromptAlchemist;
 
 use Illuminate\Support\Arr;
 use MoeMizrak\LaravelOpenrouter\DTO\ChatData;
+use MoeMizrak\LaravelOpenrouter\DTO\MessageData;
 use MoeMizrak\LaravelOpenrouter\DTO\ResponseData;
 use MoeMizrak\LaravelOpenrouter\Facades\LaravelOpenRouter;
+use MoeMizrak\LaravelOpenrouter\Types\RoleType;
 use MoeMizrak\LaravelPromptAlchemist\DTO\DocBlockData;
 use MoeMizrak\LaravelPromptAlchemist\DTO\ErrorData;
 use MoeMizrak\LaravelPromptAlchemist\DTO\FunctionData;
@@ -347,6 +349,51 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
         }
 
         return $this->writeToYmlFile($fileName, $functionList);
+    }
+
+    /**
+     * Generates instructions that can be used in config content_payload_instructions.
+     *
+     * @return array|\ArrayAccess|mixed
+     * @throws UnknownProperties
+     * @throws \MoeMizrak\LaravelOpenrouter\Exceptions\XorValidationException
+     */
+    public function generateInstructions(): mixed
+    {
+        // Get functions, functionPayloadSchema and prompt for instructions generation from the config.
+        $functions = Yaml::parseFile(config('laravel-prompt-alchemist.functions_yml_path'));
+        $functionPayloadSchema = Yaml::parseFile(config('laravel-prompt-alchemist.schemas.function_payload_schema_path'));
+        $prompt = config('laravel-prompt-alchemist.instructions.generate_content_payload_instructions_prompt');
+
+        $content = [
+            'prompt'                  => $prompt,
+            'functions'               => $functions,
+            'function_payload_schema' => $functionPayloadSchema,
+        ];
+
+        /*
+         * Prepare MessageData DTO for OpenRouter request
+         */
+        $messageData = new MessageData([
+            'content' => json_encode($content),
+            'role'    => RoleType::USER,
+        ]);
+
+        /*
+         * Prepare ChatData DTO for OpenRouter request
+         */
+        $chatData = new ChatData([
+            'messages' => [
+                $messageData,
+            ],
+            'model'   => config('laravel-prompt-alchemist.env_variables.default_model'),
+        ]);
+
+        // Make OpenRouter request with prepared ChatData
+        $openRouterResponse = $this->openRouterChatRequest($chatData);
+
+        // Return the instructions created.
+        return Arr::get($openRouterResponse->choices[0], 'message.content');
     }
 
     /**

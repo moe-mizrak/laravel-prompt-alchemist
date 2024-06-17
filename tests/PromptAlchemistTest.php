@@ -33,7 +33,7 @@ class PromptAlchemistTest extends TestCase
         parent::setUp();
 
         $this->content = 'Can you break down Mr. Boolean Bob expenses from last month by category and show me the top 3 spending categories?';
-        $this->model = 'mistralai/mistral-7b-instruct:free';
+        $this->model = config('laravel-prompt-alchemist.env_variables.default_model');
         $this->maxTokens = 100;
         $this->messageData = new MessageData([
             'content' => $this->content,
@@ -69,6 +69,7 @@ class PromptAlchemistTest extends TestCase
      * General assertions required for testing instead of replicating the same code.
      *
      * @param $response
+     *
      * @return void
      */
     private function generalTestAssertions($response): void
@@ -608,6 +609,18 @@ class PromptAlchemistTest extends TestCase
 
         /* CLEANUP */
         $this->deleteYmlFile($this->testYmlFileName);
+    }
+
+    /**
+     * @test
+     */
+    public function it_generates_specific_instructions_from_functions_and_payload_schema()
+    {
+        /* EXECUTE */
+        $instructions = $this->request->generateInstructions();
+
+        /* ASSERT */
+        $this->assertNotNull($instructions);
     }
 
     /**
