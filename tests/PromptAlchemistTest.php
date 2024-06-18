@@ -11,6 +11,7 @@ use MoeMizrak\LaravelPromptAlchemist\DTO\ErrorData;
 use MoeMizrak\LaravelPromptAlchemist\DTO\FunctionData;
 use MoeMizrak\LaravelPromptAlchemist\DTO\ParameterData;
 use MoeMizrak\LaravelPromptAlchemist\DTO\ReturnData;
+use MoeMizrak\LaravelPromptAlchemist\Facades\LaravelPromptAlchemist;
 use MoeMizrak\LaravelPromptAlchemist\PromptAlchemistRequest;
 use MoeMizrak\LaravelPromptAlchemist\Types\VisibilityType;
 use Spatie\DataTransferObject\Exceptions\UnknownProperties;
@@ -639,30 +640,19 @@ class PromptAlchemistTest extends TestCase
     }
 
     /**
-     * TODO:
-     * Things that will be developed and should be considered:
-     * - DONE handle the case there is no function is found
-     * - order of params also matter for functions.yml
-     * - for functions request to LLM provider, i am also getting value in response while in ContentPayloadTemplate it is strictly asked to use schema, so play with instructions
-     * - In case llm returns with the response that is missing some required parameter, there can be a feedback for it in case of missing field, another llm request is made or request is made with the response to ask for correcting it
-     * - callFunctions which makes the function calls, function with its parameters should be provided so that it will be able to make the function call.
-     * - Be cautious! adding more to functions.yml will increase the cost of llm requests
-     * - Another service can be developed which takes php code class, and asks for the functions that will be used, so it will give formatted functions.yml
-     * - PromptAlchemistAPI => remove if unnecessary since constructor is empty
-     *
-     * - add method names of request to facade class docblock, so that we wil be able to call them with facade
-     * - add readme that functions can be either names array or functionData array, if your project is written in a good way, you can just provide the array of names as in it_generates_function_list_from_class_and_desired_function_names
+     * @test
      */
+    public function it_successfully_uses_functions_with_facade()
+    {
+        /* EXECUTE */
+        $response = LaravelPromptAlchemist::preparePromptFunctionPayload($this->content);
 
-    /**
-     * todo:
-     * - For the function_signature_mapping in config file, we need a good readme explanation and as mentioned above, a functionality that it generates functions.yml
-     * [*] indicates indexed arrays, [] indicates associative arrays, {key} indicates the dynamic associative key
-     *
-     * Other samples for parameter_required_info:
-     * for parameter_definitions['startDate' => ['required' => true]] --> parameter_required_info = parameter_definitions.{key}.required_field  https://docs.cohere.com/docs/tool-use
-     * for parameters[ ['name' => 'startDate', 'required' => true], ['name' => 'category', 'required' => true] ] --> parameter_required_info = parameters[].name.required
-     * for parameters['startDate' => ['type' => 'date', 'example' => '2024'], 'category' => ['type' => 'string'] ], required['startDate', 'category']  --> parameter_required_info = required.{key} ??
-     *  here it gets messy as above case, when associative array is used so how to recognize the keys as something that will be retrieved for using in codebase, function name, required part should be handled carefully
-     */
+        /* ASSERT */
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('instructions', $response);
+        $this->assertArrayHasKey('prompt', $response);
+        $this->assertArrayHasKey('functions', $response);
+        $this->assertArrayHasKey('function_payload_schema', $response);
+        $this->assertArrayHasKey('function_payload_schema', $response);
+    }
 }
