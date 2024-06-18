@@ -6,6 +6,10 @@ use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
 use MoeMizrak\LaravelOpenrouter\OpenRouterServiceProvider;
 use MoeMizrak\LaravelPromptAlchemist\Facades\LaravelPromptAlchemist;
+use MoeMizrak\LaravelPromptAlchemist\Helpers\FunctionListGenerator;
+use MoeMizrak\LaravelPromptAlchemist\Helpers\FunctionSignatureValidator;
+use MoeMizrak\LaravelPromptAlchemist\Helpers\InstructionsGenerator;
+use MoeMizrak\LaravelPromptAlchemist\Helpers\PayloadBuilder;
 
 class PromptAlchemistServiceProvider extends ServiceProvider
 {
@@ -32,7 +36,12 @@ class PromptAlchemistServiceProvider extends ServiceProvider
         $this->configureOpenRouter();
 
         $this->app->bind('laravel-prompt-alchemist', function () {
-            return new PromptAlchemistRequest();
+            return new PromptAlchemistRequest(
+                new PayloadBuilder(),
+                new FunctionSignatureValidator(),
+                new FunctionListGenerator(),
+                new InstructionsGenerator()
+            );
         });
 
         $this->app->bind(PromptAlchemistRequest::class, function () {
