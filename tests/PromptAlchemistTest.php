@@ -6,6 +6,7 @@ use Illuminate\Support\Arr;
 use MoeMizrak\LaravelOpenrouter\DTO\ChatData;
 use MoeMizrak\LaravelOpenrouter\DTO\MessageData;
 use MoeMizrak\LaravelOpenrouter\DTO\ResponseData;
+use MoeMizrak\LaravelOpenrouter\Facades\LaravelOpenRouter;
 use MoeMizrak\LaravelOpenrouter\Types\RoleType;
 use MoeMizrak\LaravelPromptAlchemist\DTO\ErrorData;
 use MoeMizrak\LaravelPromptAlchemist\DTO\FunctionData;
@@ -102,7 +103,7 @@ class PromptAlchemistTest extends TestCase
         ]);
 
         /* EXECUTE */
-        $response = invade($this->request)->openRouterChatRequest($chatData);
+        $response = LaravelOpenRouter::chatRequest($chatData);
 
         /* ASSERT */
         $this->generalTestAssertions($response);
@@ -148,7 +149,7 @@ class PromptAlchemistTest extends TestCase
         ]);
 
         /* EXECUTE */
-        $response = invade($this->request)->openRouterChatRequest($chatData);
+        $response = LaravelOpenRouter::chatRequest($chatData);
 
         /* ASSERT */
         $responseContentData = str_replace("\n", "", (Arr::get($response->choices[0], 'message.content')));
@@ -258,7 +259,7 @@ class PromptAlchemistTest extends TestCase
         ]);
 
         /* EXECUTE */
-        $response = invade($this->request)->openRouterChatRequest($chatData);
+        $response = LaravelOpenRouter::chatRequest($chatData);
 
         /* ASSERT */
         $responseContent = json_decode(Arr::get($response->choices[0], 'message.content'), true);
@@ -622,21 +623,6 @@ class PromptAlchemistTest extends TestCase
 
         /* ASSERT */
         $this->assertNotNull($instructions);
-    }
-
-    /**
-     * @test
-     */
-    public function it_makes_call_to_functions_that_signature_provided()
-    {
-        /* SETUP */
-        $this->markTestSkipped('Will be developed for later versions');
-
-        /* EXECUTE */
-        $this->request->callFunctions();
-
-        /* ASSERT */
-
     }
 
     /**
