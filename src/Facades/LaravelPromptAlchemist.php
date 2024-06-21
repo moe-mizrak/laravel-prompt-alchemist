@@ -13,7 +13,7 @@ use MoeMizrak\LaravelPromptAlchemist\DTO\ErrorData;
  * @method static void callFunctions() This function will be implemented later.
  * @method static bool|ErrorData validateFunctionSignature(array $llmReturnedFunction) Validates a function signature returned by the LLM.
  * @method static bool|ErrorData generateFunctionList(string|object $class, array $functions, string $fileName) Generates a detailed function list from a given class and writes it to a file in YAML format.
- * @method static mixed generateInstructions() Generates instructions that can be used in config content_payload_instructions.
+ * @method static mixed generateInstructions() Generates instructions that can be used in config prompt_function_instructions.
  */
 class LaravelPromptAlchemist extends Facade
 {

@@ -31,7 +31,7 @@ class InstructionsGenerator
         // Get functions, functionPayloadSchema and prompt for instructions generation from the config.
         $functions = Yaml::parseFile(config('laravel-prompt-alchemist.functions_yml_path'));
         $functionPayloadSchema = Yaml::parseFile(config('laravel-prompt-alchemist.schemas.function_payload_schema_path'));
-        $prompt = config('laravel-prompt-alchemist.instructions.generate_content_payload_instructions_prompt');
+        $prompt = config('laravel-prompt-alchemist.instructions.generate_prompt_function_instructions');
 
         $content = [
             'prompt'                  => $prompt,

@@ -45,7 +45,7 @@ return [
         | Here you may specify the default model to be used for LLM requests.
         | If you are using OpenRouter, you can check the model list from https://openrouter.ai/docs/models
         */
-        'default_model' => 'mistralai/mistral-7b-instruct:free',
+        'default_model' => env('OPENROUTER_DEFAULT_MODEL', 'mistralai/mistral-7b-instruct:free'),
     ],
 
     /*
@@ -82,13 +82,13 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Instructions Definitions for content payload and response payload
+    | Instructions Definitions for prompt function payload and function results payload
     |--------------------------------------------------------------------------
     | This section defines the instructions which gives strict description of desired format answers and how llm provider will process provided prompt, schemas etc.
     |
     */
     'instructions' => [
-        'content_payload_instructions'  => 'You are an AI assistant that strictly follows instructions and provides responses in a specific format.
+        'prompt_function_instructions'  => 'You are an AI assistant that strictly follows instructions and provides responses in a specific format.
             Your task is to analyze a given prompt and identify the required functions from a provided list to answer the prompt.
             Your response should be a JSON array that lists the required function names, their parameters (name and type only), and the class_name, following the exact format specified in the "function_payload_schema".
                 Do not include any additional information, explanations, or values beyond what is specified in the schema. Adhere to the following instructions:
@@ -101,7 +101,7 @@ return [
                 7. Do not provide any actual values for the parameters. Only include the parameter names and types as specified in the "function_payload_schema".
                 8. If you do not understand the instructions or cannot provide a response following the specified format, respond with "NULL".
                 9. If no relevant function is found in the "functions" list to answer the prompt, the response should be the string "NULL" without any additional description or text',
-        'response_payload_instructions' => 'You will strictly follow the instructions:
+        'function_results_instructions' => 'You will strictly follow the instructions:
                 - Understand the provided prompt and answer the prompt using the function_results (needed info is provided in function_results). If function_results are not sufficient enough, then your answer will be "Please provide more information about [missing information]"
                 - Respond based on the function_results_schema sample provided (Do not add any extra info, exactly the same format provided in function_results_schema).
                 - Format the response as an array following the structure in function_results_schema, without adding any explanatory sentences or context. 
@@ -110,12 +110,12 @@ return [
 
         /*
         |--------------------------------------------------------------------------
-        | Generate content_payload_instructions prompt which is used for generating specific/customised instructions with functions and function_payload_schema.
+        | Generate prompt_function_instructions prompt which is used for generating specific/customised instructions with functions and function_payload_schema.
         |--------------------------------------------------------------------------
-        | Basically content_payload_instructions is created for provided functions and function_payload_schema.
+        | Basically prompt_function_instructions is created for provided functions and function_payload_schema.
         | It is used with generateInstructions function in PromptAlchemistRequest for better performance.
         */
-        'generate_content_payload_instructions_prompt' => 'You are an AI assistant tasked with providing instructions to another AI system on how to respond to a given prompt with a specific JSON format. Your role is to analyze the provided "functions" and "function_payload_schema" and create a set of instructions that will ensure the other AI system generates a response following the specified format.
+        'generate_prompt_function_instructions' => 'You are an AI assistant tasked with providing instructions to another AI system on how to respond to a given prompt with a specific JSON format. Your role is to analyze the provided "functions" and "function_payload_schema" and create a set of instructions that will ensure the other AI system generates a response following the specified format.
             The "functions" field contains a list of available functions, their parameters, descriptions, and return types. The "function_payload_schema" field specifies the expected format for the response, which should be a JSON array listing the required fields for each function.
             Your instructions should cover the following points:
                 1. Read the provided "prompt" and the list of available "functions".
