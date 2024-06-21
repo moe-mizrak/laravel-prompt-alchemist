@@ -79,7 +79,7 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
     }
 
     /**
-     * Generate instructions that can be used in config content_payload_instructions.
+     * Generate instructions that can be used in config prompt_function_instructions.
      *
      * @return mixed
      * @throws XorValidationException

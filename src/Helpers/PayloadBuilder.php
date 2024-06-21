@@ -25,7 +25,7 @@ class PayloadBuilder
     {
         $functions = Yaml::parseFile(config('laravel-prompt-alchemist.functions_yml_path'));
         $functionPayloadSchema = Yaml::parseFile(config('laravel-prompt-alchemist.schemas.function_payload_schema_path'));
-        $instructions = config('laravel-prompt-alchemist.instructions.content_payload_instructions');
+        $instructions = config('laravel-prompt-alchemist.instructions.prompt_function_instructions');
 
         return ContentPayloadTemplate::createPayload($prompt, $instructions, $functions, $functionPayloadSchema);
     }
@@ -41,7 +41,7 @@ class PayloadBuilder
     public function buildFunctionResultsPayload(string $prompt, array $functionResults): array
     {
         $resultsSchema = Yaml::parseFile(config('laravel-prompt-alchemist.schemas.function_results_schema_path'));
-        $instructions = config('laravel-prompt-alchemist.instructions.response_payload_instructions');
+        $instructions = config('laravel-prompt-alchemist.instructions.function_results_instructions');
 
         return ResponsePayloadTemplate::createPayload($prompt, $instructions, $functionResults, $resultsSchema);
     }
