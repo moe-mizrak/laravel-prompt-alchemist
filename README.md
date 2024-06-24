@@ -107,16 +107,19 @@ Create function signatures **manually** using your chosen naming convention in a
 ℹ️ Ensure coherence with **function_signature_mapping**, which aligns your naming practices with the package format for integration. (**Note:** Please refer to !!HERE link function signature!! section for which function signatures should be defined in function list yml file for better performance)
 - Create yml file for function list with any preferred naming and directory.
 <br/>
+
 **e.g.** You can create a file named `functions.yml` in the resources folder under your project
 ```env 
 __DIR__ . '/../resources/functions.yml'
 ```
 - Define functions in yml file that you will be using for the package (for Tool Use - Function Calling).
 <br/>
+
 **e.g.** You can create functions as samples below in a **flat associative array structure** or your choice of function naming convention.
 <br/><br/>
+
 **Recommended** naming convention (Automated way of generating function list as given in the second option below [generateFunctionList](#use-generatefunctionlist-method) also generates function list in this format):
-```yml
+```
 -
 function_name: getFinancialData
 parameters: [{ name: userId, type: int, required: true, description: 'The unique identifier for the user.', example: 12345 }, { name: startDate, type: string, required: true, description: 'The starting date for the timeframe (inclusive).', example: '2023-01-01' }, { name: endDate, type: string, required: true, description: 'The ending date for the timeframe (inclusive).', example: '2023-01-31' }]
@@ -133,7 +136,7 @@ return: { type: array, description: 'An array of transactions with an added "cat
 class_name: MoeMizrak\LaravelPromptAlchemist\Tests\Example
 ```
 Or, another naming convention in a **flat associative array structure** can be as:
-```yml
+```
 - function: getFinancialData
   input_schema:
     type: object
