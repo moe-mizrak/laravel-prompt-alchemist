@@ -87,7 +87,7 @@ OPENROUTER_DEFAULT_MODEL=default_model
 - `function_results_instructions`: Instructions for the LLM used for function results payload. The [Usage](#-usage) section provides a deep dive into function results instructions. (**e.g.** You will strictly follow the instructions as ...)
 - `generate_prompt_function_instructions`: Instructions for generating prompt_function_instructions by using **generateInstructions** function. The [Usage](#-usage) section provides a deep dive into generating prompt function instructions. (**e.g.** Your role is to analyze the provided "functions" and ...)
 
-➡️ `function_signature_mapping`: Add mapping for function signature namings. The [Usage](#-usage) section provides a deep dive into function signature mapping. (**e.g.** ``` new FunctionSignatureMappingData(['parameters' => new MappingData(['path' => 'input_schema.properties', 'type' => 'array']), ...])``` )
+➡️ `function_signature_mapping`: Add mapping for function signature namings. The [Define Function Signature Mapping](#define-function-signature-mapping) section provides a deep dive into function signature mapping. (**e.g.** ``` new FunctionSignatureMappingData(['parameters' => new MappingData(['path' => 'input_schema.properties', 'type' => 'array']), ...])``` )
 
 ---
 ## 🎨 Usage
@@ -307,9 +307,9 @@ public function functionWithSomeMissingDocBlockAndMissingTypeHint($stringParam, 
 <br/>
 Based on your best practices in your codebase, you can choose how to generate function list (functions.yml).
    
-1. If functions are well-defined in your codebase, you can use [alternative approach](#alternative-functions-array) to send the function names in functions array with no additional info (`generateFunctionList` does everything for you).
-2. If functions are poorly-defined in your codebase, then it is best to use the [main approach](#use-generatefunctionlist-method) by creating FunctionData DTO for each function and setting function related info/descriptions to create functions array.
-3. If functions are partially-defined in your codebase, then similarly using the [main approach](#use-generatefunctionlist-method) is the best option since more info is better for LLM to know about your functions to make the best decision.
+1. If functions are **well-defined** in your codebase, you can use [alternative approach](#alternative-functions-array) to send the function names in functions array with no additional info (`generateFunctionList` does everything for you).
+2. If functions are **poorly-defined** in your codebase, then it is best to use the [main approach](#use-generatefunctionlist-method) by creating FunctionData DTO for each function and setting function related info/descriptions to create functions array.
+3. If functions are **partially-defined** in your codebase, then similarly using the [main approach](#use-generatefunctionlist-method) is the best option since more info is better for LLM to know about your functions to make the best decision.
 <br/>
    
 **Note:** You can just add **missing/ambiguous/poorly-defined** fields in **FunctionData** DTO and skip the descriptions/fields that are **well-defined** 
@@ -318,13 +318,14 @@ Also note that fields added to **FunctionData** DTO **overwrite** the existing p
 (Basically if a field is added to **FunctionData** DTO, it is taken into account; if a field is NOT added to FunctionData and exists in function declaration then this predefined description/field is added to function list).  
 
 #### Define Function Signature Mapping
-Based on the function list (functions.yml), align your naming practices for functions with the package format for integration.
-<br/>
-
-(As shown examples below, use `'[]'` for the arrays. In package, it is replaced with the index key as e.g. `parameters[].name` becomes `parameters.{key}.name` which is `parameters.0.name` for the first array index, `parameters.1.name` for the second etc.)
+Based on the function list (functions.yml), align your naming practices for functions with the package format for integration. 
+It is better practice to set all possible fields for function signature (`FunctionSignatureMappingData`) for better performance since more info provided for LLM means better result.
 <br/>
 
 `function_signature_mapping` needs to be defined in the configuration file as following examples:
+<br/>
+
+(As shown in examples below, use `'[]'` for the arrays. In package, it is replaced with the index key as e.g. `parameters[].name` becomes `parameters.{key}.name` which is `parameters.0.name` for the first array index, `parameters.1.name` for the second etc.)
 - In case your function list (functions.yml) is created with [recommended naming convention](#recommended-naming-convention):
 ```php
 'function_signature_mapping' => new FunctionSignatureMappingData([
