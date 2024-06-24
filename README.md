@@ -101,11 +101,12 @@ The `LaravelPromptAlchemist` facade offers a convenient way to make Laravel Prom
 #### Generate Function List
 In order to generate function list (functions.yml), you can either:
 
-##### Manually create function signatures
+##### Manually create function list
 Create function signatures **manually** using your chosen naming convention in a **flat associative array structure**.
 <br/>
 
-ℹ️ Ensure coherence with **function_signature_mapping**, which aligns your naming practices with the package format for integration. (**Note:** Please refer to !!HERE link function signature!! section for which function signatures should be defined in function list yml file for better performance)
+ℹ️ Ensure coherence with **function_signature_mapping**, which aligns your naming practices with the package format for integration.
+(**Note:** Please refer to [Define Function Signature Mapping](#define-function-signature-mapping) section for which function signatures should be defined in function list yml file for better performance)
 - Create yml file for function list with any preferred naming and directory.
 <br/>
 
@@ -120,6 +121,7 @@ __DIR__ . '/../resources/functions.yml'
 <br/>
 
 **Recommended** naming convention ([generateFunctionList](#use-generatefunctionlist-method) method for generating a function list, also outputs the function list in this format):
+<a id="recommended-naming-convention"></a>
 ```
 -
 function_name: getFinancialData
@@ -137,6 +139,7 @@ return: { type: array, description: 'An array of transactions with an added "cat
 class_name: MoeMizrak\LaravelPromptAlchemist\Tests\Example
 ```
 Or, another naming convention in a **flat associative array structure** can be as:
+<a id="another-naming-convention"></a>
 ```
 - function: getFinancialData
   input_schema:
@@ -251,7 +254,7 @@ $fileName = __DIR__ . '/../resources/functions.yml'; // Path and the name of the
 LaravelPromptAlchemist::generateFunctionList($class, $functions, $fileName);
 ```
 <a id="alternative-functions-array"></a>
-**Alternative** way for creating the `functions` array; when function signatures and docblock are well-defined, simply adding function names suffices to create a comprehensive function list:
+**Alternative** way for creating the `functions` array; when function signatures and docblock are **well-defined**, simply adding function names suffices to create a comprehensive function list:
 ```php
 $class = Example::class; // Or you can give fully qualified class name string as $class = 'MoeMizrak\LaravelPromptAlchemist\Tests\Example'
 // Name of the functions that will be added to the list - functions that will be used for Tool Use (Function Calling)
@@ -313,6 +316,142 @@ Based on your best practices in your codebase, you can choose how to generate fu
 since `generateFunctionList` analyses function and adds all possible information about the function.
 Also note that fields added to **FunctionData** DTO **overwrite** the existing predefined descriptions/fields in the function .
 (Basically if a field is added to **FunctionData** DTO, it is taken into account; if a field is NOT added to FunctionData and exists in function declaration then this predefined description/field is added to function list).  
+
+#### Define Function Signature Mapping
+Based on the function list (functions.yml), align your naming practices for functions with the package format for integration.
+<br/>
+
+(As shown examples below, use `'[]'` for the arrays. In package, it is replaced with the index key as e.g. `parameters[].name` becomes `parameters.{key}.name` which is `parameters.0.name` for the first array index, `parameters.1.name` for the second etc.)
+<br/>
+
+`function_signature_mapping` needs to be defined in the configuration file as following examples:
+- In case your function list (functions.yml) is created with [recommended naming convention](#recommended-naming-convention):
+```php
+'function_signature_mapping' => new FunctionSignatureMappingData([
+    'function_name' => new MappingData([
+        'path' => 'function_name',
+        'type' => 'string',
+    ]),
+    'function_description' => new MappingData([
+        'path' => 'description',
+        'type' => 'string',
+    ]),
+    'function_visibility' => new MappingData([
+        'path' => 'visibility',
+        'type' => 'string',
+    ]),
+    'function_return_type' => new MappingData([
+        'path' => 'return.type',
+        'type' => 'string',
+    ]),
+    'function_return_description' => new MappingData([
+        'path' => 'return.description',
+        'type' => 'string',
+    ]),
+    'function_return_example' => new MappingData([
+        'path' => 'return.example',
+        'type' => 'mixed',
+    ]),
+    'parameters' => new MappingData([
+        'path' => 'parameters', // could be arguments, parameter_definitions, input_schema.properties, parameters.properties
+        'type' => 'array',
+    ]),
+    'parameter_name' => new MappingData([
+        'path' => 'parameters[].name', // since parameters field is array, '[]' states the index key which will be resolved in the package as 'parameters.0.name' for the first array and so on.
+        'type' => 'string',
+    ]),
+    'parameter_type' => new MappingData([
+        'path' => 'parameters[].type',
+        'type' => 'string',
+    ]),
+    'parameter_required_info' => new MappingData([
+        'path' => 'parameters[].required',
+        'type' => 'boolean',
+    ]),
+    'parameter_description' => new MappingData([
+        'path' => 'parameters[].description',
+        'type' => 'string',
+    ]),
+    'parameter_example' => new MappingData([
+        'path' => 'parameters[].example',
+        'type' => 'mixed',
+    ]),
+    'parameter_default' => new MappingData([
+        'path' => 'parameters[].default',
+        'type' => 'mixed',
+    ]),
+    'class_name' => new MappingData([
+        'path' => 'class_name',
+        'type' => 'string',
+    ])
+]),
+```
+- If your function list (functions.yml) is created with [other naming convention](#another-naming-convention):
+```php
+'function_signature_mapping' => new FunctionSignatureMappingData([
+    'function_name' => new MappingData([
+        'path' => 'function',
+        'type' => 'string',
+    ]),
+    'function_description' => new MappingData([
+        'path' => 'description',
+        'type' => 'string',
+    ]),
+    'function_visibility' => new MappingData([
+        'path' => 'visibility',
+        'type' => 'string',
+    ]),
+    'function_return_type' => new MappingData([
+        'path' => 'return.type',
+        'type' => 'string',
+    ]),
+    'function_return_description' => new MappingData([
+        'path' => 'return.description',
+        'type' => 'string',
+    ]),
+    'function_return_example' => new MappingData([
+        'path' => 'return.example',
+        'type' => 'mixed',
+    ]),
+    'input_schema_type' => new MappingData([
+        'path' => 'input_schema.type',
+        'type' => 'string',
+    ]),
+    'parameters' => new MappingData([
+        'path' => 'input_schema.properties',
+        'type' => 'array',
+    ]),
+    'parameter_name' => new MappingData([
+        'path' => 'input_schema.properties[].name', // since properties field is array, '[]' states the index key which will be resolved in the package as 'properties.0.name' for the first array and so on.
+        'type' => 'string',
+    ]),
+    'parameter_type' => new MappingData([
+        'path' => 'input_schema.properties[].type',
+        'type' => 'string',
+    ]),
+    'parameter_required_info' => new MappingData([
+        'path' => 'input_schema.properties[].required',
+        'type' => 'boolean',
+    ]),
+    'parameter_description' => new MappingData([
+        'path' => 'input_schema.properties[].description',
+        'type' => 'string',
+    ]),
+    'parameter_example' => new MappingData([
+        'path' => 'input_schema.properties[].example',
+        'type' => 'mixed',
+    ]),
+    'parameter_default' => new MappingData([
+        'path' => 'input_schema.properties[].default',
+        'type' => 'mixed',
+    ]),
+    'class_name' => new MappingData([
+        'path' => 'class',
+        'type' => 'string',
+    ])
+]),
+```
+Regarding these 2 examples, you can define your `function_signature_mapping` in the configuration file depending on your choice of naming convention.
 
 ### Using PromptAlchemistRequest Class
 You can also inject the `PromptAlchemistRequest` class in the **constructor** of your class and use its methods directly.
