@@ -104,6 +104,7 @@ OPENROUTER_DEFAULT_MODEL=default_model
 - `function_results_instructions`: Instructions for the LLM used for function results payload. The [Prepare Function Results Payload](#prepare-function-results-payload) section provides a deep dive into function results instructions. (**e.g.** You will strictly follow the instructions as ...)
 - `generate_prompt_function_instructions`: Instructions for generating prompt_function_instructions by using **generateInstructions** function. The [Generate Prompt Function Instructions](#generate-prompt-function-instructions) section provides a deep dive into generating prompt function instructions. (**e.g.** Your role is to analyze the provided "functions" and ...)
 
+---
 ## ⚡ Quick Usage Guide
 This package is designed to be **flexible**, but for an **easy quick start**, follow the steps below:
 - Create a file named `functions.yml` under a directory of your choice. Modify config file accordingly for `functions_yml_path`.
