@@ -454,6 +454,61 @@ It is better practice to set all possible fields for function signature (`Functi
 ```
 Regarding these 2 examples, you can define your `function_signature_mapping` in the configuration file depending on your choice of naming convention.
 
+#### Generate Prompt Function Instructions
+This section defines the instructions which gives **strict description** of **desired format answers** and how LLM provider will process provided prompt, schemas etc.
+<br/>
+
+You can use your own created/generated instructions for `prompt_function_instructions`, or use `generateInstructions` method.
+<br/>
+
+`generateInstructions` method simply generates customized instructions regarding your **function list** (`functions.yml`), **function payload schema** (`function_payload_schema.yml`) and **prompt for generating instructions** (`generate_prompt_function_instructions` in **config**).
+<br/>
+
+(**Note:** `generate_prompt_function_instructions` is the prompt/instructions in **config** that describe how to generate specific/customized instructions with **functions** and **function_payload_schema**)
+<br/>
+
+Sample `generate_prompt_function_instructions` for `generateInstructions` call:
+```
+You are an AI assistant tasked with providing instructions to another AI system on how to respond to a given prompt with a specific JSON format. Your role is to analyze the provided "functions" and "function_payload_schema" and create a set of instructions that will ensure the other AI system generates a response following the specified format.
+            The "functions" field contains a list of available functions, their parameters, descriptions, and return types. The "function_payload_schema" field specifies the expected format for the response, which should be a JSON array listing the required fields for each function.
+            Your instructions should cover the following points:
+                1. Read the provided "prompt" and the list of available "functions".
+                2. Identify which function(s) from the "functions" list are needed to answer the prompt.
+                3. Analyze the "function_payload_schema" to determine the required fields for each function in the response JSON array. Do not add or omit any fields from the schema.
+                4. Explain that the response should ONLY contain a JSON array following the exact format specified in the "function_payload_schema". No additional fields, values, text, or explanations should be included.
+                5. Specify that the JSON array should list the required fields for each function, as specified in the "function_payload_schema".
+                6. Emphasize that no other information beyond the JSON array matching the "function_payload_schema" format should be added.
+                7. Ensure that the response can be directly used in PHP code without any modifications.
+                8. For the parameter fields of each function, analyze the "function_payload_schema" and include the fields exactly as specified in the schema, without making any assumptions about the field names or structure.
+                9. Clarify that no actual values for the parameters should be provided. Only the parameter fields as specified in the "function_payload_schema" should be included.
+                10. If no relevant function is found in the "functions" list to answer the prompt, the response should be the string "NULL" without any additional description or text.
+                11. If the other AI system cannot understand or follow the instructions, it should return the string "NULL" without any additional description or text.
+            Your response should be a clear and concise set of instructions that the other AI system can follow to generate the desired JSON response format based on the provided "functions" and "function_payload_schema".
+            OK, now provide the instructions as described above for the other AI system to generate the desired JSON response format based on the provided "functions" and "function_payload_schema"
+```
+
+In order to generate `prompt_function_instructions`, you can call `generateInstructions` method:
+```php
+LaravelPromptAlchemist::generateInstructions();
+```
+
+Sample response of `generateInstructions` will look like:
+```
+You are an AI assistant that strictly follows instructions and provides responses in a specific format.
+            Your task is to analyze a given prompt and identify the required functions from a provided list to answer the prompt.
+            Your response should be a JSON array that lists the required function names, their parameters (name and type only), and the class_name, following the exact format specified in the "function_payload_schema".
+                Do not include any additional information, explanations, or values beyond what is specified in the schema. Adhere to the following instructions:
+                1. Read the provided "prompt" and the list of available "functions".
+                2. Identify which function(s) from the "functions" list are needed to answer the prompt.
+                3. Your response should ONLY contain a JSON array following the exact format specified in the "function_payload_schema". Do not include any additional fields, values, text, or explanations.
+                4. The JSON array should list the required function names, their parameters (name and type only), and the class_name.
+                5. Do not add any other information beyond the JSON array matching the "function_payload_schema" format.
+                6. Ensure that the response can be directly used in PHP code without any modifications.
+                7. Do not provide any actual values for the parameters. Only include the parameter names and types as specified in the "function_payload_schema".
+                8. If you do not understand the instructions or cannot provide a response following the specified format, respond with "NULL".
+                9. If no relevant function is found in the "functions" list to answer the prompt, the response should be the string "NULL" without any additional description or text
+```
+
 #### Define Schemas
 This section defines the desired schema samples that are used for formatting the **function payload** and **function results**.
 Basically schemas are for deciding the **response format of LLM**.
