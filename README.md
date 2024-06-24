@@ -583,51 +583,51 @@ And this is the expected prepared payload response sample:
     2. Identify which function(s) from the \"functions\" list ...",
   "functions" => [
     [
-      "function_name" => "getFinancialData",
-      "parameters" => [
-        ["name" => "userId", "type" => "int"],
-        ["name" => "startDate", "type" => "string"],
-        ["name" => "endDate", "type" => "string"]
-      ],
-      "visibility" => "public",
-      "description" => "Retrieves financial data for a specific user and timeframe.",
-      "return" => [
-        "type" => "object",
-        "description" => "An object containing details like totalAmount, transactions (array), and other relevant financial data."
-      ],
-      "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\Example"
+        "function_name" => "getFinancialData",
+        "parameters" => [
+            ["name" => "userId", "type" => "int"],
+            ["name" => "startDate", "type" => "string"],
+            ["name" => "endDate", "type" => "string"]
+        ],
+        "visibility" => "public",
+        "description" => "Retrieves financial data for a specific user and timeframe.",
+        "return" => [
+            "type" => "object",
+            "description" => "An object containing details like totalAmount, transactions (array), and other relevant financial data."
+        ],
+        "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\Example"
     ],
     [
-      "function_name" => "getCreditScore",
-      "parameters" => [
-        ["name" => "userId", "type" => "int"]
-      ],
-      "visibility" => "public",
-      "description" => "Retrieves the current credit score for a specific user.",
-      "return" => [
-        "type" => "object",
-        "description" => "An object containing the credit score, credit report summary, and any relevant notes."
-      ],
-      "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\Example"
+        "function_name" => "getCreditScore",
+        "parameters" => [
+            ["name" => "userId", "type" => "int"]
+        ],
+        "visibility" => "public",
+        "description" => "Retrieves the current credit score for a specific user.",
+        "return" => [
+            "type" => "object",
+            "description" => "An object containing the credit score, credit report summary, and any relevant notes."
+        ],
+        "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\Example"
     ],
     ...
   ],
   "function_payload_schema" => [
     [
-      "function_name" => "getFinancialData",
-      "parameters" => [
-        ["name" => "userId", "type" => "int"],
-        ["name" => "startDate", "type" => "string"],
-        ["name" => "endDate", "type" => "string"]
-      ],
-      "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\ExampleA"
+        "function_name" => "getFinancialData",
+        "parameters" => [
+            ["name" => "userId", "type" => "int"],
+            ["name" => "startDate", "type" => "string"],
+            ["name" => "endDate", "type" => "string"]
+        ],
+        "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\ExampleA"
     ],
     [
-      "function_name" => "getCreditScore",
-      "parameters" => [
-        ["name" => "userId", "type" => "int"]
-      ],
-      "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\ExampleD"
+        "function_name" => "getCreditScore",
+        "parameters" => [
+            ["name" => "userId", "type" => "int"]
+        ],
+        "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\ExampleD"
     ],
     ...
   ]
@@ -682,63 +682,63 @@ And this is the expected prepared payload response sample:
     - Format the response as an array following  ...",
   "function_results" => [
     [
-      "function_name" => "getFinancialData",
-      "result" => [
-        "totalAmount" => 122,
-        "transactions" => [
-          [
-            "amount" => 12,
-            "date" => "2023-02-02",
-            "description" => "food"
-          ]
+        "function_name" => "getFinancialData",
+        "result" => [
+            "totalAmount" => 122,
+            "transactions" => [
+                [
+                "amount" => 12,
+                "date" => "2023-02-02",
+                "description" => "food"
+                ]
+            ]
         ]
-      ]
     ],
     [
-      "function_name" => "getCreditScore",
-      "result" => [
-        "creditScore" => 0.8,
-        "summary" => "reliable"
-      ]
+        "function_name" => "getCreditScore",
+        "result" => [
+            "creditScore" => 0.8,
+            "summary" => "reliable"
+        ]
     ]
     ...
   ],
   "function_results_schema" => [
     [
-      "function_name" => "getFinancialData",
-      "result" => [
-        [
-          "name" => "transactions",
-          "type" => "array",
-          "value" => [
+        "function_name" => "getFinancialData",
+        "result" => [
             [
-              "amount" => null,
-              "date" => "2023-02-02",
-              "description" => "shoes"
+                "name" => "transactions",
+                "type" => "array",
+                "value" => [
+                    [
+                        "amount" => null,
+                        "date" => "2023-02-02",
+                        "description" => "shoes"
+                    ]
+                ]
+            ],
+            [
+                "name" => "totalAmount",
+                "type" => "int",
+                "value" => 1234
             ]
-          ]
-        ],
-        [
-          "name" => "totalAmount",
-          "type" => "int",
-          "value" => 1234
-        ]
       ]
     ],
     [
-      "function_name" => "getCreditScore",
-      "result" => [
-        [
-          "name" => "creditScore",
-          "type" => "float",
-          "value" => 0.5
-        ],
-        [
-          "name" => "summary",
-          "type" => "string",
-          "value" => "reliable"
+        "function_name" => "getCreditScore",
+        "result" => [
+            [
+                "name" => "creditScore",
+                "type" => "float",
+                "value" => 0.5
+            ],
+            [
+                "name" => "summary",
+                "type" => "string",
+                "value" => "reliable"
+            ]
         ]
-      ]
     ]
     ...
   ]
