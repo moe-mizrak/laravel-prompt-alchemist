@@ -115,7 +115,7 @@ This package is designed to be **flexible**, but for an **easy quick start**, fo
 
 - Generate **function list** as in [Use generateFunctionList method](#use-generatefunctionlist-method).
   It automatically adds functions to **functions.yml** file with all possible **function signature details/descriptions** considering also **function's docblock**.
-  <br/>
+<br/>
 
 (Add **all classes** and **functions** that LLM should take into account for its decisions, as much info as possible in **FunctionData** for better performance):
 ```php
@@ -189,7 +189,7 @@ LaravelPromptAlchemist::generateFunctionList($class, $functions, $fileName);
 
 - Create yml file for **function payload schema** and modify `function_payload_schema_path` in **config** accordingly.
   (Check [Function Payload Schema](#function-payload-schema) for further details).
-  <br/>
+<br/>
 
 Sample `function_payload_schema.yml` as:
 ```
@@ -211,7 +211,7 @@ Sample `function_payload_schema.yml` as:
 - Add `OPENROUTER_API_KEY`, `OPENROUTER_DEFAULT_MODEL` and `OPENROUTER_API_ENDPOINT` in your env file - as defined in **env_variables** in config
   (`OPENROUTER_API_ENDPOINT` already has default value which can be skipped, `OPENROUTER_API_KEY` and `OPENROUTER_DEFAULT_MODEL` should be set as described in [Configuration](#-configuration) section.)
 - Leave `prompt_function_instructions` in **config** untouched or check out [Generate Prompt Function Instructions](#generate-prompt-function-instructions) in order to generate **customized** new instructions.
-- Make [Laravel OpenRouter](https://github.com/moe-mizrak/laravel-openrouter) request for Tool Use (Function Calling) so that LLM will make decision which functions to call for **given prompt**.
+- Make [Laravel OpenRouter](https://github.com/moe-mizrak/laravel-openrouter) request for Tool Use (Function Calling) so that LLM will make decision which functions to call for the **given prompt**.
   (**Note:** **Laravel OpenRouter** already comes with this package - as default LLM provider - so no need for a separate installation)
 ```php
 $prompt = 'Can tell me Mr. Boolean Bob credit score?';
@@ -260,7 +260,7 @@ LaravelOpenRouter::validateFunctionSignature($llmReturnedFunction);
 ```
 
 - And finally in your codebase, call **functions returned from the LLM** which are necessary for answering the **prompt** (Since **function signature** is **validated**, it is now **safe** to call **LLM returned functions**).
-  <br/>
+<br/>
 
 > **Note:** Automatic function calls will be available in an **upcoming release!** Stay tuned for **updates!**
 
