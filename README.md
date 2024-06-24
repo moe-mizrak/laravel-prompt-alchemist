@@ -81,8 +81,8 @@ OPENROUTER_DEFAULT_MODEL=default_model
 ➡️ `function_signature_mapping`: Add mapping for function signature namings. The [Define Function Signature Mapping](#define-function-signature-mapping) section provides a deep dive into function signature mapping. (**e.g.** ``` new FunctionSignatureMappingData(['parameters' => new MappingData(['path' => 'input_schema.properties', 'type' => 'array']), ...])``` )
 
 ➡️ `schemas` Add path of the schemas needed for function payload and function results payload.
-- `function_payload_schema_path`: Path of the function payload schema. The [Usage](#-usage) section provides a deep dive into function payload schema. (**e.g.** &#95;&#95;DIR&#95;&#95; . '/../resources/schemas/function_payload_schema.yml')
-- `function_results_schema_path`: Path of the function results schema. The [Usage](#-usage) section provides a deep dive into function results schema. (**e.g.** &#95;&#95;DIR&#95;&#95; . '/../resources/schemas/function_results_schema.yml')
+- `function_payload_schema_path`: Path of the function payload schema. The [Function Payload Schema](#function-payload-schema) section provides a deep dive into function payload schema. (**e.g.** &#95;&#95;DIR&#95;&#95; . '/../resources/schemas/function_payload_schema.yml')
+- `function_results_schema_path`: Path of the function results schema. The [Function Results Schema](#function-results-schema) section provides a deep dive into function results schema. (**e.g.** &#95;&#95;DIR&#95;&#95; . '/../resources/schemas/function_results_schema.yml')
 
 ➡️ `instructions`: Add instructions for prompt_function_instructions, function_results_instructions and generate_prompt_function_instructions.
 - `prompt_function_instructions`: Instructions for the LLM used for prompt function payload. The [Usage](#-usage) section provides a deep dive into prompt function instructions. (**e.g.** You are an AI assistant that strictly follows instructions and provides response ...)
@@ -92,11 +92,11 @@ OPENROUTER_DEFAULT_MODEL=default_model
 ---
 ## 🎨 Usage
 This package provides two ways to interact with the Laravel Prompt Alchemist package:
-- Using the `LaravelPromptAlchemist` facade.
-- Instantiating the `PromptAlchemistRequest` class directly.
+- Using the `LaravelPromptAlchemist` facade (i.e. [Using Facade](#using-facade)).
+- Instantiating the `PromptAlchemistRequest` class directly (i.e. [Using PromptAlchemistRequest Class](#using-promptalchemistrequest-class)).
 
 ### Using Facade
-The `LaravelPromptAlchemist` facade offers a convenient way to make Laravel Prompt Alchemist requests.
+The `LaravelPromptAlchemist` facade offers a convenient way to make Laravel Prompt Alchemist requests. Following sections will lead you through further configuration and usage of `LaravelPromptAlchemist` facade.
 
 #### Generate Function List
 In order to generate function list (functions.yml), you can either:
@@ -453,6 +453,242 @@ It is better practice to set all possible fields for function signature (`Functi
 ]),
 ```
 Regarding these 2 examples, you can define your `function_signature_mapping` in the configuration file depending on your choice of naming convention.
+
+#### Define Schemas
+This section defines the desired schema samples that are used for formatting the **function payload** and **function results**.
+Basically schemas are for deciding the **response format of LLM**.
+They are sent to LLM along with other info (prompt, functions - function results, instructions etc.) and in instructions LLM asked to give results as same format as in schema provided.
+In this way, LLM response can be resolved in package so that it can be used for Tool Use (Function Calling).
+
+##### Function Payload Schema
+Schema that defines the structure of the function payload.
+- Create yml file for function payload schema with any preferred naming and directory, add it to config file under `schemas`.
+```php
+'schemas' => [
+    'function_payload_schema_path' => __DIR__ . '/../resources/schemas/function_payload_schema.yml',
+]
+```
+- Define schema as example given below. The naming convention should align with the function list (functions.yml)
+because LLM response will depend on this schema and response will be **validated** in the package by comparing the function list (functions.yml) file.
+```
+-
+  function_name: getFinancialData
+  parameters: [{ name: userId, type: int }, { name: startDate, type: string }, { name: endDate, type: string }]
+  class_name: MoeMizrak\LaravelPromptAlchemist\Tests\Example
+-
+  function_name: getCreditScore
+  parameters: [{ name: userId, type: int }]
+  class_name: MoeMizrak\LaravelPromptAlchemist\Tests\ExampleD
+```
+
+##### Function Results Schema
+Schema that defines the structure of the function results. This schema is for deciding the final response where function results are sent to LLM to form the response after Tool Use (Function Calling).
+<br/>
+
+This schema is not required if you will not be sending Tool Use (Function Calling) results to LLM. You might prefer using function results in your codebase to derive a response directly.
+- Create yml file for function results schema with any preferred naming and directory, add it to config file under `schemas`.
+```php
+'schemas' => [
+    'function_results_schema_path' => __DIR__ . '/../resources/schemas/function_results_schema.yml',
+]
+```
+- Define schema as example given below.
+```
+-
+  function_name: getFinancialData
+  result: [{ name: transactions, type: array, value: [{ amount: , date: '2023-02-02', description: shoes }] }, { name: totalAmount, type: int, value: 1234 }]
+-
+  function_name: getCreditScore
+  result: [{ name: creditScore, type: float, value: 0.5 }, { name: summary, type: string, value: reliable }]
+```
+
+#### Prepare Prompt Function Payload
+This method is responsible for creating a structured payload template based on a given prompt and a list of functions (functions.yml) which later will be sent to an LLM provider.
+This method constructs an array containing **instructions**, the **prompt**, a **list of functions**, and a **function payload schema**.
+The instructions detail how the prompt should be processed, ensuring the response strictly adheres to the provided format.
+<br/>
+
+For the prompt which you will be used for Tool Use (Function Calling):
+```php
+$prompt = 'Can tell me Mr. Boolean Bob credit score?';
+```
+This is how you can call preparePromptFunctionPayload method by using facade:
+```php
+LaravelPromptAlchemist::preparePromptFunctionPayload($prompt);
+```
+And this is the expected prepared payload response sample:
+```php
+[
+  "prompt" => "Can tell me Mr. Boolean Bob credit score?",
+  "instructions" => "You are an AI assistant that strictly follows instructions and provides responses in a specific format.\n
+    Your task is to analyze a given prompt and identify the required functions from a provided list to answer the prompt.\n
+    Your response should be a JSON array that lists the required function names, their parameters (name and type only), and the class_name, following the exact format specified in the \"function_payload_schema\".\n
+    Do not include any additional information, explanations, or values beyond what is specified in the schema. Adhere to the following instructions:\n
+    1. Read the provided \"prompt\" and the list of available \"functions\".\n
+    2. Identify which function(s) from the \"functions\" list ...",
+  "functions" => [
+    [
+      "function_name" => "getFinancialData",
+      "parameters" => [
+        ["name" => "userId", "type" => "int"],
+        ["name" => "startDate", "type" => "string"],
+        ["name" => "endDate", "type" => "string"]
+      ],
+      "visibility" => "public",
+      "description" => "Retrieves financial data for a specific user and timeframe.",
+      "return" => [
+        "type" => "object",
+        "description" => "An object containing details like totalAmount, transactions (array), and other relevant financial data."
+      ],
+      "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\Example"
+    ],
+    [
+      "function_name" => "getCreditScore",
+      "parameters" => [
+        ["name" => "userId", "type" => "int"]
+      ],
+      "visibility" => "public",
+      "description" => "Retrieves the current credit score for a specific user.",
+      "return" => [
+        "type" => "object",
+        "description" => "An object containing the credit score, credit report summary, and any relevant notes."
+      ],
+      "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\Example"
+    ],
+    ...
+  ],
+  "function_payload_schema" => [
+    [
+      "function_name" => "getFinancialData",
+      "parameters" => [
+        ["name" => "userId", "type" => "int"],
+        ["name" => "startDate", "type" => "string"],
+        ["name" => "endDate", "type" => "string"]
+      ],
+      "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\ExampleA"
+    ],
+    [
+      "function_name" => "getCreditScore",
+      "parameters" => [
+        ["name" => "userId", "type" => "int"]
+      ],
+      "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\ExampleD"
+    ],
+    ...
+  ]
+]
+```
+
+#### Prepare Function Results Payload
+This method is responsible for creating a structured payload template based on a given prompt and a list of functions (functions.yml) which later will be sent to an LLM provider.
+This method constructs an array containing **instructions**, the **prompt**, a **list of functions**, and a **function payload schema**.
+The instructions detail how the prompt should be processed, ensuring the response strictly adheres to the provided format.
+<br/>
+
+For the prompt which you will be used for Tool Use (Function Calling):
+```php
+$prompt = 'Can tell me Mr. Boolean Bob credit score?';
+
+$functionResults = [
+    [
+        'function_name' => 'getFinancialData',
+        'result' => [
+            'totalAmount' => 122,
+            'transactions' => [
+                [
+                    'amount'      => 12,
+                    'date'        => '2023-02-02',
+                    'description' => 'food',
+                ],
+            ]
+        ],
+    ],
+    [
+        'function_name' => 'getCreditScore',
+        'result' => [
+            'creditScore' => 0.8,
+            'summary' => 'reliable',
+        ]
+    ],
+    ...
+];
+```
+This is how you can call prepareFunctionResultsPayload method by using facade:
+```php
+LaravelPromptAlchemist::prepareFunctionResultsPayload($prompt, $functionResults);
+```
+And this is the expected prepared payload response sample:
+```php
+[
+  "prompt" => "Can tell me Mr. Boolean Bob credit score?",
+  "instructions" => "You will strictly follow the instructions:\n
+    - Understand the provided prompt and answer the prompt using the function_results (needed info is provided in function_results). If function_results are not sufficient enough, then your answer will be \"Please provide more information about [missing information]\"\n
+    - Respond based on the function_results_schema sample provided (Do not add any extra info, exactly the same format provided in function_results_schema).\n
+    - Format the response as an array following  ...",
+  "function_results" => [
+    [
+      "function_name" => "getFinancialData",
+      "result" => [
+        "totalAmount" => 122,
+        "transactions" => [
+          [
+            "amount" => 12,
+            "date" => "2023-02-02",
+            "description" => "food"
+          ]
+        ]
+      ]
+    ],
+    [
+      "function_name" => "getCreditScore",
+      "result" => [
+        "creditScore" => 0.8,
+        "summary" => "reliable"
+      ]
+    ]
+    ...
+  ],
+  "function_results_schema" => [
+    [
+      "function_name" => "getFinancialData",
+      "result" => [
+        [
+          "name" => "transactions",
+          "type" => "array",
+          "value" => [
+            [
+              "amount" => null,
+              "date" => "2023-02-02",
+              "description" => "shoes"
+            ]
+          ]
+        ],
+        [
+          "name" => "totalAmount",
+          "type" => "int",
+          "value" => 1234
+        ]
+      ]
+    ],
+    [
+      "function_name" => "getCreditScore",
+      "result" => [
+        [
+          "name" => "creditScore",
+          "type" => "float",
+          "value" => 0.5
+        ],
+        [
+          "name" => "summary",
+          "type" => "string",
+          "value" => "reliable"
+        ]
+      ]
+    ]
+    ...
+  ]
+]
+```
 
 ### Using PromptAlchemistRequest Class
 You can also inject the `PromptAlchemistRequest` class in the **constructor** of your class and use its methods directly.
