@@ -117,9 +117,11 @@ This package is designed to be **flexible**, but for an **easy quick start**, fo
 ```php
 'functions_yml_path' => __DIR__ . '/../resources/functions.yml', // functions.yml is located under resources folder in this example.
 ```
+
 - Generate **function list** as in [Use generateFunctionList method](#use-generatefunctionlist-method).
 It automatically adds functions to **functions.yml** file with all possible **function signature details/descriptions** considering also **function's docblock**.
 <br/>
+
 (Add **all classes** and **functions** that LLM should take into account for its decisions, as much info as possible in **FunctionData** for better performance):
 ```php
 $class = Example::class;
@@ -189,9 +191,11 @@ $fileName = __DIR__ . '/../resources/functions.yml'; // Path and the name of the
 // Call generateFunctionList for automated function list generation in given $fileName (Creates file in this path if not existed).
 LaravelPromptAlchemist::generateFunctionList($class, $functions, $fileName);
 ```
+
 - Create yml file for **function payload schema** and modify `function_payload_schema_path` in **config** accordingly.
 (Check [Function Payload Schema](#function-payload-schema) for further details).
 <br/>
+
 Sample `function_payload_schema.yml` as:
 ```
 -
@@ -203,10 +207,12 @@ Sample `function_payload_schema.yml` as:
   parameters: [{ name: userId, type: int }]
   class_name: MoeMizrak\LaravelPromptAlchemist\Tests\ExampleD
 ```
+
 **Config** file path for `function_payload_schema_path`:
 ```php
 'function_payload_schema_path' => __DIR__ . '/../resources/schemas/function_payload_schema.yml', // function_payload_schema.yml is located under resources/schemas folder in this example.
 ```
+
 - Add `OPENROUTER_API_KEY`, `OPENROUTER_DEFAULT_MODEL` and `OPENROUTER_API_ENDPOINT` in your env file - as defined in **env_variables** in config
 (`OPENROUTER_API_ENDPOINT` already has default value which can be skipped, `OPENROUTER_API_KEY` and `OPENROUTER_DEFAULT_MODEL` should be set as described in [Configuration](#-configuration) section.)
 - Leave `prompt_function_instructions` in **config** untouched or check out [Generate Prompt Function Instructions](#generate-prompt-function-instructions) in order to generate **customized** new instructions.
@@ -233,6 +239,7 @@ $chatData = new ChatData([
 // Send OpenRouter request
 $response = LaravelOpenRouter::chatRequest($chatData);
 ```
+
 - **Validate** the response retrieved from **OpenRouter**.
 Sample LLM returned functions:
 ```php
@@ -251,10 +258,12 @@ $llmReturnedFunction = [ // Sample LLM returned function
     'class_name' => 'MoeMizrak\LaravelPromptAlchemist\Tests\Example'
 ];
 ```
+
 Call `validateFunctionSignature` for function signature **validation**:
 ```php
 LaravelOpenRouter::validateFunctionSignature($llmReturnedFunction);
 ```
+
 - And finally in your codebase, call **functions returned from the LLM** which are necessary for answering the **prompt** (Since **function signature** is **validated**, it is now **safe** to call **LLM returned functions**).
 <br/>
 
@@ -291,6 +300,7 @@ $functionResults = [
 
 $response = LaravelPromptAlchemist::prepareFunctionResultsPayload($prompt, $functionResults);
 ```
+
 Where `$response` is the `function_results_schema` formed answer returned from the LLM according to `function_results_instructions`.
 
 ### Using Facade
@@ -312,6 +322,7 @@ Create function signatures **manually** using your chosen naming convention in a
 ```env 
 __DIR__ . '/../resources/functions.yml'
 ```
+
 - Define functions in yml file that you will be using for the package (for Tool Use - Function Calling).
 <br/>
 
@@ -336,6 +347,7 @@ description: 'Categorizes a list of transactions based on predefined rules or ma
 return: { type: array, description: 'An array of transactions with an added "category" field if successfully categorized. Each transaction may also include a "confidenceScore" field.', example: [{ amount: 100, date: '2023-01-01', description: 'Groceries', category: 'Food', confidenceScore: 0.95 }, { amount: 50, date: '2023-01-02', description: 'Entertainment', category: 'Leisure', confidenceScore: 0.8 }] }
 class_name: MoeMizrak\LaravelPromptAlchemist\Tests\Example
 ```
+
 Or, another naming convention in a **flat associative array structure** can be as:
 <a id="another-naming-convention"></a>
 ```
