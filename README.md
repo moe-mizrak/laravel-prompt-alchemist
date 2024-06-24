@@ -16,8 +16,8 @@ This Laravel package enables versatile **LLM Tool Use (Function Calling)**, allo
 - [🤖 Requirements](#-requirements)
 - [🏁 Get Started](#-get-started)
 - [⚙️ Configuration](#-configuration)
+- [⚡ Quick Usage Guide](#-quick-usage-guide)
 - [🎨 Usage](#-usage)
-    - [Quick Usage Guide](#quick-usage-guide)
     - [Using Facade](#using-facade)
         - [Generate Function List](#generate-function-list)
             - [Manually create function list](#manually-create-function-list)
@@ -104,23 +104,17 @@ OPENROUTER_DEFAULT_MODEL=default_model
 - `function_results_instructions`: Instructions for the LLM used for function results payload. The [Prepare Function Results Payload](#prepare-function-results-payload) section provides a deep dive into function results instructions. (**e.g.** You will strictly follow the instructions as ...)
 - `generate_prompt_function_instructions`: Instructions for generating prompt_function_instructions by using **generateInstructions** function. The [Generate Prompt Function Instructions](#generate-prompt-function-instructions) section provides a deep dive into generating prompt function instructions. (**e.g.** Your role is to analyze the provided "functions" and ...)
 
----
-## 🎨 Usage
-This package provides two ways to interact with the Laravel Prompt Alchemist package:
-- Using the `LaravelPromptAlchemist` facade (i.e. [Using Facade](#using-facade)).
-- Instantiating the `PromptAlchemistRequest` class directly (i.e. [Using PromptAlchemistRequest Class](#using-promptalchemistrequest-class)).
-
-### Quick Usage Guide
+## ⚡ Quick Usage Guide
 This package is designed to be **flexible**, but for an **easy quick start**, follow the steps below:
 - Create a file named `functions.yml` under a directory of your choice. Modify config file accordingly for `functions_yml_path`.
-(Check [Generate Function List](#generate-function-list) for further details).
+  (Check [Generate Function List](#generate-function-list) for further details).
 ```php
 'functions_yml_path' => __DIR__ . '/../resources/functions.yml', // functions.yml is located under resources folder in this example.
 ```
 
 - Generate **function list** as in [Use generateFunctionList method](#use-generatefunctionlist-method).
-It automatically adds functions to **functions.yml** file with all possible **function signature details/descriptions** considering also **function's docblock**.
-<br/>
+  It automatically adds functions to **functions.yml** file with all possible **function signature details/descriptions** considering also **function's docblock**.
+  <br/>
 
 (Add **all classes** and **functions** that LLM should take into account for its decisions, as much info as possible in **FunctionData** for better performance):
 ```php
@@ -193,8 +187,8 @@ LaravelPromptAlchemist::generateFunctionList($class, $functions, $fileName);
 ```
 
 - Create yml file for **function payload schema** and modify `function_payload_schema_path` in **config** accordingly.
-(Check [Function Payload Schema](#function-payload-schema) for further details).
-<br/>
+  (Check [Function Payload Schema](#function-payload-schema) for further details).
+  <br/>
 
 Sample `function_payload_schema.yml` as:
 ```
@@ -214,10 +208,10 @@ Sample `function_payload_schema.yml` as:
 ```
 
 - Add `OPENROUTER_API_KEY`, `OPENROUTER_DEFAULT_MODEL` and `OPENROUTER_API_ENDPOINT` in your env file - as defined in **env_variables** in config
-(`OPENROUTER_API_ENDPOINT` already has default value which can be skipped, `OPENROUTER_API_KEY` and `OPENROUTER_DEFAULT_MODEL` should be set as described in [Configuration](#-configuration) section.)
+  (`OPENROUTER_API_ENDPOINT` already has default value which can be skipped, `OPENROUTER_API_KEY` and `OPENROUTER_DEFAULT_MODEL` should be set as described in [Configuration](#-configuration) section.)
 - Leave `prompt_function_instructions` in **config** untouched or check out [Generate Prompt Function Instructions](#generate-prompt-function-instructions) in order to generate **customized** new instructions.
 - Make [Laravel OpenRouter](https://github.com/moe-mizrak/laravel-openrouter) request for Tool Use (Function Calling) so that LLM will make decision which functions to call for **given prompt**.
-(**Note:** **Laravel OpenRouter** already comes with this package - as default LLM provider - so no need for a separate installation)
+  (**Note:** **Laravel OpenRouter** already comes with this package - as default LLM provider - so no need for a separate installation)
 ```php
 $prompt = 'Can tell me Mr. Boolean Bob credit score?';
 $model = config('laravel-prompt-alchemist.env_variables.default_model'); // Check https://openrouter.ai/docs/models for supported models
@@ -241,7 +235,7 @@ $response = LaravelOpenRouter::chatRequest($chatData);
 ```
 
 - **Validate** the response retrieved from **OpenRouter**.
-Sample LLM returned functions:
+  Sample LLM returned functions:
 ```php
 // $response = LaravelOpenRouter::chatRequest($chatData);
 $responseContentData = str_replace("\n", "", (Arr::get($response->choices[0], 'message.content'))); // Get content from the response.
@@ -265,12 +259,12 @@ LaravelOpenRouter::validateFunctionSignature($llmReturnedFunction);
 ```
 
 - And finally in your codebase, call **functions returned from the LLM** which are necessary for answering the **prompt** (Since **function signature** is **validated**, it is now **safe** to call **LLM returned functions**).
-<br/>
+  <br/>
 
 > **Note:** Automatic function calls will be available in an **upcoming release!** Stay tuned for **updates!**
 
 - Optionally, you can also send **function results** to LLM so that regarding `function_results_schema`, it will return the answer.
-(Check [Prepare Function Results Payload](#prepare-function-results-payload) for more details)
+  (Check [Prepare Function Results Payload](#prepare-function-results-payload) for more details)
 ```php
 $prompt = 'Can tell me Mr. Boolean Bob credit score?';
 
@@ -302,6 +296,12 @@ $response = LaravelPromptAlchemist::prepareFunctionResultsPayload($prompt, $func
 ```
 
 Where `$response` is the `function_results_schema` formed answer returned from the LLM according to `function_results_instructions`.
+
+---
+## 🎨 Usage
+This package provides two ways to interact with the Laravel Prompt Alchemist package:
+- Using the `LaravelPromptAlchemist` facade (i.e. [Using Facade](#using-facade)).
+- Instantiating the `PromptAlchemistRequest` class directly (i.e. [Using PromptAlchemistRequest Class](#using-promptalchemistrequest-class)).
 
 ### Using Facade
 The `LaravelPromptAlchemist` facade offers a convenient way to make Laravel Prompt Alchemist requests. Following sections will lead you through further configuration and usage of `LaravelPromptAlchemist` facade.
