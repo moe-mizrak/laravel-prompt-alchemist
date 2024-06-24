@@ -18,6 +18,7 @@ This Laravel package enables versatile **LLM Tool Use (Function Calling)**, allo
 - [⚙️ Configuration](#-configuration)
 - [🎨 Usage](#-usage)
     - [Using Facade](#using-facade)
+        - [Quick Usage Guide](#quick-usage-guide)
         - [Generate Function List](#generate-function-list)
             - [Manually create function list](#manually-create-function-list)
             - [Use generateFunctionList method](#use-generatefunctionlist-method)
@@ -108,6 +109,189 @@ OPENROUTER_DEFAULT_MODEL=default_model
 This package provides two ways to interact with the Laravel Prompt Alchemist package:
 - Using the `LaravelPromptAlchemist` facade (i.e. [Using Facade](#using-facade)).
 - Instantiating the `PromptAlchemistRequest` class directly (i.e. [Using PromptAlchemistRequest Class](#using-promptalchemistrequest-class)).
+
+### Quick Usage Guide
+This package is designed to be **flexible**, but for an **easy quick start**, follow the steps below:
+- Create a file named `functions.yml` under a directory of your choice. Modify config file accordingly for `functions_yml_path`.
+(Check [Generate Function List](#generate-function-list) for further details).
+```php
+'functions_yml_path' => __DIR__ . '/../resources/functions.yml', // functions.yml is located under resources folder in this example.
+```
+- Generate **function list** as in [Use generateFunctionList method](#use-generatefunctionlist-method).
+It automatically adds functions to **functions.yml** file with all possible **function signature details/descriptions** considering also **function's docblock**.
+<br/>
+(Add **all classes** and **functions** that LLM should take into account for its decisions, as much info as possible in **FunctionData** for better performance):
+```php
+$class = Example::class;
+
+$functionDataA = new FunctionData([
+    'function_name' => 'getFinancialData',
+    'parameters' => [
+        new ParameterData([
+            'name' => 'userId',
+            'type' => 'int',
+            'required' => true,
+            'description' => 'The unique identifier for the user.',
+            'example' => 12345
+        ]),
+        new ParameterData([
+            'name' => 'startDate',
+            'type' => 'string',
+            'required' => true,
+            'description' => 'The starting date for the timeframe (inclusive).',
+            'example' => '2023-01-01'
+        ]),
+        new ParameterData([
+           'name' => 'endDate',
+           'type' => 'string',
+           'required' => true,
+           'description' => 'The ending date for the timeframe (inclusive).',
+           'example' => '2023-01-31'
+        ]),
+    ],
+    'visibility' => VisibilityType::PUBLIC,
+    'description' => 'Retrieves financial data for a specific user and timeframe.',
+    'return' => new ReturnData([
+        'type' => 'object',
+        'description' => 'An object containing details like totalAmount, transactions (array), and other relevant financial data.'
+    ]),
+]);
+   
+$functionDataB = new FunctionData([
+    'function_name' => 'categorizeTransactions',
+    'parameters' => [
+        new ParameterData([
+            'name' => 'transactions',
+            'type' => 'array',
+            'required' => true,
+            'description' => 'An array of transactions with details like amount, date, and description.',
+            'example' => [
+                ['amount' => 100, 'date' => '2023-01-01', 'description' => 'Groceries'],
+                ['amount' => 50, 'date' => '2023-01-02', 'description' => 'Entertainment']
+            ]
+        ]),
+    ],
+    'visibility' => VisibilityType::PUBLIC,
+    'description' => 'Categorizes a list of transactions based on predefined rules or machine learning models.',
+    'return' => new ReturnData([
+        'type' => 'array',
+        'description' => 'An array of transactions with an added "category" field if successfully categorized. Each transaction may also include a "confidenceScore" field.',
+        'example' => [
+            ['amount' => 100, 'date' => '2023-01-01', 'description' => 'Groceries', 'category' => 'Food', 'confidenceScore' => 0.95],
+            ['amount' => 50, 'date' => '2023-01-02', 'description' => 'Entertainment', 'category' => 'Leisure', 'confidenceScore' => 0.8]
+        ]
+    ]),
+]);
+   
+$functions = [$functionDataA, $functionDataB];
+
+$fileName = __DIR__ . '/../resources/functions.yml'; // Path and the name of the file that function list will be generated
+// Call generateFunctionList for automated function list generation in given $fileName (Creates file in this path if not existed).
+LaravelPromptAlchemist::generateFunctionList($class, $functions, $fileName);
+```
+- Create yml file for **function payload schema** and modify `function_payload_schema_path` in **config** accordingly.
+(Check [Function Payload Schema](#function-payload-schema) for further details).
+<br/>
+Sample `function_payload_schema.yml` as:
+```
+-
+  function_name: getFinancialData
+  parameters: [{ name: userId, type: int }, { name: startDate, type: string }, { name: endDate, type: string }]
+  class_name: MoeMizrak\LaravelPromptAlchemist\Tests\ExampleA
+-
+  function_name: getCreditScore
+  parameters: [{ name: userId, type: int }]
+  class_name: MoeMizrak\LaravelPromptAlchemist\Tests\ExampleD
+```
+**Config** file path for `function_payload_schema_path`:
+```php
+'function_payload_schema_path' => __DIR__ . '/../resources/schemas/function_payload_schema.yml', // function_payload_schema.yml is located under resources/schemas folder in this example.
+```
+- Add `OPENROUTER_API_KEY`, `OPENROUTER_DEFAULT_MODEL` and `OPENROUTER_API_ENDPOINT` in your env file - as defined in **env_variables** in config
+(`OPENROUTER_API_ENDPOINT` already has default value which can be skipped, `OPENROUTER_API_KEY` and `OPENROUTER_DEFAULT_MODEL` should be set as described in [Configuration](#-configuration) section.)
+- Leave `prompt_function_instructions` in **config** untouched or check out [Generate Prompt Function Instructions](#generate-prompt-function-instructions) in order to generate **customized** new instructions.
+- Make [Laravel OpenRouter](https://github.com/moe-mizrak/laravel-openrouter) request for Tool Use (Function Calling) so that LLM will make decision which functions to call for **given prompt**.
+(**Note:** **Laravel OpenRouter** already comes with this package - as default LLM provider - so no need for a separate installation)
+```php
+$prompt = 'Can tell me Mr. Boolean Bob credit score?';
+$model = config('laravel-prompt-alchemist.env_variables.default_model'); // Check https://openrouter.ai/docs/models for supported models
+$content = LaravelPromptAlchemist::preparePromptFunctionPayload($prompt); // Prepare payload for the request.
+
+$messageData = new MessageData([
+    'content' => json_encode($content),
+    'role'    => RoleType::USER,
+]);
+
+$chatData = new ChatData([
+    'messages' => [
+        $messageData,
+    ],
+    'model'       => $model,
+    'temperature' => 0.1, // Set temperature low to get better result. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
+]);
+
+// Send OpenRouter request
+$response = LaravelOpenRouter::chatRequest($chatData);
+```
+- **Validate** the response retrieved from **OpenRouter**.
+Sample LLM returned functions:
+```php
+// $response = LaravelOpenRouter::chatRequest($chatData);
+$responseContentData = str_replace("\n", "", (Arr::get($response->choices[0], 'message.content'))); // Get content from the response.
+$llmReturnedFunctions = json_decode($responseContentData, true); // Functions returned from LLM.
+
+// Foreach $llmReturnedFunctions and get each function to validate:
+$llmReturnedFunction = [ // Sample LLM returned function
+    "function_name" => "getFinancialData",
+    "parameters" => [
+        [ "name" => "userId", "type" => "int"],
+        [ "name" => "startDate", "type" => "string"],
+        [ "name" => "endDate", "type" => "string"],
+    ],
+    'class_name' => 'MoeMizrak\LaravelPromptAlchemist\Tests\Example'
+];
+```
+Call `validateFunctionSignature` for function signature **validation**:
+```php
+LaravelOpenRouter::validateFunctionSignature($llmReturnedFunction);
+```
+- And finally in your codebase, call **functions returned from the LLM** which are necessary for answering the **prompt** (Since **function signature** is **validated**, it is now **safe** to call **LLM returned functions**).
+<br/>
+
+> **Note:** Automatic function calls will be available in an **upcoming release!** Stay tuned for **updates!**
+
+- Optionally, you can also send **function results** to LLM so that regarding `function_results_schema`, it will return the answer.
+(Check [Prepare Function Results Payload](#prepare-function-results-payload) for more details)
+```php
+$prompt = 'Can tell me Mr. Boolean Bob credit score?';
+
+$functionResults = [
+    [
+        'function_name' => 'getFinancialData',
+        'result' => [
+            'totalAmount' => 122,
+            'transactions' => [
+                [
+                    'amount'      => 12,
+                    'date'        => '2023-02-02',
+                    'description' => 'food',
+                ],
+            ]
+        ],
+    ],
+    [
+        'function_name' => 'getCreditScore',
+        'result' => [
+            'creditScore' => 0.8,
+            'summary' => 'reliable',
+        ]
+    ],
+    ...
+];
+
+$response = LaravelPromptAlchemist::prepareFunctionResultsPayload($prompt, $functionResults);
+```
+Where `$response` is the `function_results_schema` formed answer returned from the LLM according to `function_results_instructions`.
 
 ### Using Facade
 The `LaravelPromptAlchemist` facade offers a convenient way to make Laravel Prompt Alchemist requests. Following sections will lead you through further configuration and usage of `LaravelPromptAlchemist` facade.
@@ -654,7 +838,7 @@ This method constructs an array containing **instructions**, the **prompt**, a *
 The instructions detail how the prompt should be processed, ensuring the response strictly adheres to the provided format.
 <br/>
 
-For the prompt which you will be used for Tool Use (Function Calling):
+Prompt which will be used for Tool Use (Function Calling):
 ```php
 $prompt = 'Can tell me Mr. Boolean Bob credit score?';
 
@@ -760,7 +944,7 @@ And this is the expected prepared payload response sample:
 ```
 
 #### Send Tool Use (Function Calling) Request to OpenRouter
-Since this package is designed in a **flexible** way, you may use [Laravel OpenRouter]((https://github.com/moe-mizrak/laravel-openrouter)) (please check out **OpenRouter** github repository for more information)
+Since this package is designed in a **flexible** way, you may use [Laravel OpenRouter](https://github.com/moe-mizrak/laravel-openrouter) (please check out **OpenRouter** github repository for more information)
 which is used as the **default LLM provider** for this package, or you may use **any other LLM provider** with this package to send Tool Use (Function Calling) request.
 <br/>
 This is the sample OpenRouter request:
@@ -779,7 +963,6 @@ $chatData = new ChatData([
         $messageData,
     ],
     'model'       => $model,
-    'max_tokens'  => 900,
     'temperature' => 0.1, // Set temperature low to get better result. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
 ]);
 
