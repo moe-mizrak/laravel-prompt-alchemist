@@ -266,14 +266,14 @@ Sample of well-defined function signature and docblock.
 (Docblock description with enough info, type-hinted params, return type declaration and return tag description in docblock, parameter descriptions in docblock):
 ```php
 /**
-* This public function is intended for testing purposes. It accepts a string and int parameters and returns a string.
-* It has additional parameter descriptions and detailed docblock.
-*
-* @param string $stringParam This is the string param description
-* @param int $intParam This is the int param description
-*
-* @return string This is the return value description
-*/
+ * This public function is intended for testing purposes. It accepts a string and int parameters and returns a string.
+ * It has additional parameter descriptions and detailed docblock.
+ *
+ * @param string $stringParam This is the string param description
+ * @param int $intParam This is the int param description
+ *
+ * @return string This is the return value description
+ */
 public function detailedDocBlockFunction(string $stringParam, int $intParam = 2): string
 {
     return 'detailed docblock function return value ' . $stringParam . ' ' . $intParam;
@@ -290,11 +290,11 @@ function noExtraInfoProvidedFunction($stringParam, $intParam)
 Sample of partially-defined function signature and docblock:
 ```php
 /**
-* This public function is intended for testing purposes.
-* It has missing parameter descriptions and missing type-hint.
-*
-* @return string This is the return value description
-*/
+ * This public function is intended for testing purposes.
+ * It has missing parameter descriptions and missing type-hint.
+ *
+ * @return string This is the return value description
+ */
 public function functionWithSomeMissingDocBlockAndMissingTypeHint($stringParam, $intParam): string
 {
     return 'missing parameter docblock function return value ' . $stringParam . ' ' . $intParam;
