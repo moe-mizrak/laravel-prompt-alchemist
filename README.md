@@ -78,6 +78,8 @@ OPENROUTER_DEFAULT_MODEL=default_model
 
 ➡️ `functions_yml_path` Add path of the functions yml file which is the callable function list of your project. The [Generate Function List](#generate-function-list) section provides a deep dive into functions yml file; how to define functions, format needs to be used etc. (**e.g.** &#95;&#95;DIR&#95;&#95; . '/../resources/functions.yml'). 
 
+➡️ `function_signature_mapping`: Add mapping for function signature namings. The [Define Function Signature Mapping](#define-function-signature-mapping) section provides a deep dive into function signature mapping. (**e.g.** ``` new FunctionSignatureMappingData(['parameters' => new MappingData(['path' => 'input_schema.properties', 'type' => 'array']), ...])``` )
+
 ➡️ `schemas` Add path of the schemas needed for function payload and function results payload.
 - `function_payload_schema_path`: Path of the function payload schema. The [Usage](#-usage) section provides a deep dive into function payload schema. (**e.g.** &#95;&#95;DIR&#95;&#95; . '/../resources/schemas/function_payload_schema.yml')
 - `function_results_schema_path`: Path of the function results schema. The [Usage](#-usage) section provides a deep dive into function results schema. (**e.g.** &#95;&#95;DIR&#95;&#95; . '/../resources/schemas/function_results_schema.yml')
@@ -86,8 +88,6 @@ OPENROUTER_DEFAULT_MODEL=default_model
 - `prompt_function_instructions`: Instructions for the LLM used for prompt function payload. The [Usage](#-usage) section provides a deep dive into prompt function instructions. (**e.g.** You are an AI assistant that strictly follows instructions and provides response ...)
 - `function_results_instructions`: Instructions for the LLM used for function results payload. The [Usage](#-usage) section provides a deep dive into function results instructions. (**e.g.** You will strictly follow the instructions as ...)
 - `generate_prompt_function_instructions`: Instructions for generating prompt_function_instructions by using **generateInstructions** function. The [Usage](#-usage) section provides a deep dive into generating prompt function instructions. (**e.g.** Your role is to analyze the provided "functions" and ...)
-
-➡️ `function_signature_mapping`: Add mapping for function signature namings. The [Define Function Signature Mapping](#define-function-signature-mapping) section provides a deep dive into function signature mapping. (**e.g.** ``` new FunctionSignatureMappingData(['parameters' => new MappingData(['path' => 'input_schema.properties', 'type' => 'array']), ...])``` )
 
 ---
 ## 🎨 Usage
