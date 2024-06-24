@@ -119,7 +119,7 @@ __DIR__ . '/../resources/functions.yml'
 **e.g.** You can create functions as samples below in a **flat associative array structure** or your choice of function naming convention.
 <br/>
 
-**Recommended** naming convention (Automated way of generating function list as given in the second option below [generateFunctionList](#use-generatefunctionlist-method) also generates function list in this format):
+**Recommended** naming convention ([generateFunctionList](#use-generatefunctionlist-method) method for generating a function list, also outputs the function list in this format):
 ```
 -
 function_name: getFinancialData
@@ -263,7 +263,7 @@ $fileName = __DIR__ . '/../resources/functions.yml'; // Path and the name of the
 // Call generateFunctionList for automated function list generation in given $fileName (Creates file in this path if not existed).
 LaravelPromptAlchemist::generateFunctionList($class, $functions, $fileName);
 ```
-Sample of well-defined function signature and docblock.
+Sample of **well-defined function** signature and docblock.
 (Docblock description with enough info, type-hinted params, return type declaration and return tag description in docblock, parameter descriptions in docblock):
 ```php
 /**
@@ -280,7 +280,7 @@ public function detailedDocBlockFunction(string $stringParam, int $intParam = 2)
     return 'detailed docblock function return value ' . $stringParam . ' ' . $intParam;
 }
 ```
-Sample of poorly-defined function signature and docblock.
+Sample of **poorly-defined function** signature and docblock.
 (no docblock, no type-hint for params, no return type declaration):
 ```php
 function noExtraInfoProvidedFunction($stringParam, $intParam)
@@ -288,7 +288,7 @@ function noExtraInfoProvidedFunction($stringParam, $intParam)
     return 'missing parameter and docblock function return value ' . $stringParam . ' ' . $intParam;
 }
 ```
-Sample of partially-defined function signature and docblock:
+Sample of **partially-defined function** signature and docblock:
 ```php
 /**
  * This public function is intended for testing purposes.
@@ -309,9 +309,9 @@ Based on your best practices in your codebase, you can choose how to generate fu
 3. If functions are partially-defined in your codebase, then similarly using the [main approach](#use-generatefunctionlist-method) is the best option since more info is better for LLM to know about your functions to make the best decision.
 <br/>
    
-**Note:** You can just add **missing/weak/poorly-defined** fields in **FunctionData** DTO and skip the descriptions/fields that are well-defined 
+**Note:** You can just add **missing/ambiguous/poorly-defined** fields in **FunctionData** DTO and skip the descriptions/fields that are **well-defined** 
 since `generateFunctionList` analyses function and adds all possible information about the function.
-Also note that fields added to **FunctionData** DTO overwrite the existing predefined descriptions/fields in the function .
+Also note that fields added to **FunctionData** DTO **overwrite** the existing predefined descriptions/fields in the function .
 (Basically if a field is added to **FunctionData** DTO, it is taken into account; if a field is NOT added to FunctionData and exists in function declaration then this predefined description/field is added to function list).  
 
 ### Using PromptAlchemistRequest Class
