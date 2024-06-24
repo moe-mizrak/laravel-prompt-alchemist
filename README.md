@@ -103,7 +103,8 @@ In order to generate function list (functions.yml), you can either:
 
 ##### Manually create function signatures
 Create function signatures **manually** using your chosen naming convention in a **flat associative array structure**.
-<br/><br/>
+<br/>
+
 ℹ️ Ensure coherence with **function_signature_mapping**, which aligns your naming practices with the package format for integration. (**Note:** Please refer to !!HERE link function signature!! section for which function signatures should be defined in function list yml file for better performance)
 - Create yml file for function list with any preferred naming and directory.
 <br/>
@@ -116,7 +117,7 @@ __DIR__ . '/../resources/functions.yml'
 <br/>
 
 **e.g.** You can create functions as samples below in a **flat associative array structure** or your choice of function naming convention.
-<br/><br/>
+<br/>
 
 **Recommended** naming convention (Automated way of generating function list as given in the second option below [generateFunctionList](#use-generatefunctionlist-method) also generates function list in this format):
 ```
@@ -306,7 +307,6 @@ Based on your best practices in your codebase, you can choose how to generate fu
 1. If functions are well-defined in your codebase, you can use [alternative approach](#alternative-functions-array) to send the function names in functions array with no additional info (`generateFunctionList` does everything for you).
 2. If functions are poorly-defined in your codebase, then it is best to use the [main approach](#use-generatefunctionlist-method) by creating FunctionData DTO for each function and setting function related info/descriptions to create functions array.
 3. If functions are partially-defined in your codebase, then similarly using the [main approach](#use-generatefunctionlist-method) is the best option since more info is better for LLM to know about your functions to make the best decision.
-
 <br/>
    
 **Note:** You can just add **missing/weak/poorly-defined** fields in **FunctionData** DTO and skip the descriptions/fields that are well-defined 
