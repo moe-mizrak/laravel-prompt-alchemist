@@ -387,7 +387,7 @@ It is better practice to set all possible fields for function signature (`Functi
     ])
 ]),
 ```
-- If your function list (functions.yml) is created with [other naming convention](#another-naming-convention):
+- If your function list (functions.yml) is created with [another naming convention](#another-naming-convention):
 ```php
 'function_signature_mapping' => new FunctionSignatureMappingData([
     'function_name' => new MappingData([
@@ -743,6 +743,98 @@ And this is the expected prepared payload response sample:
     ...
   ]
 ]
+```
+
+#### Send Tool Use (Function Calling) Request to OpenRouter
+Since this package is designed in a **flexible** way, you may use [Laravel OpenRouter]((https://github.com/moe-mizrak/laravel-openrouter)) (please check out **OpenRouter** github repository for more information)
+which is used as the **default LLM provider** for this package, or you may use **any other LLM provider** with this package to send Tool Use (Function Calling) request.
+<br/>
+This is the sample OpenRouter request:
+```php
+$prompt = 'Can tell me Mr. Boolean Bob credit score?';
+$model = config('laravel-prompt-alchemist.env_variables.default_model'); // Check https://openrouter.ai/docs/models for supported models
+$content = LaravelPromptAlchemist::preparePromptFunctionPayload($prompt);
+
+$messageData = new MessageData([
+    'content' => json_encode($content),
+    'role'    => RoleType::USER,
+]);
+
+$chatData = new ChatData([
+    'messages' => [
+        $messageData,
+    ],
+    'model'       => $model,
+    'max_tokens'  => 900,
+    'temperature' => 0.1, // Set temperature low to get better result. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
+]);
+
+// Send OpenRouter request
+$response = LaravelOpenRouter::chatRequest($chatData);
+```
+
+Sample **Laravel OpenRouter** response (**ResponseData** is returned):
+```php
+output:
+
+ResponseData([
+    'id' => 'gen-YFd68mMgTkrfHVvkdemwYxdGSfZA',
+    'model' => 'mistralai/mistral-7b-instruct:free',
+    'object' => 'chat.completion',
+    'created' => 1719251736,
+    'choices' => [
+        0 => [
+            'index' => 0,
+            'message' => [
+                'role' => 'assistant',
+                'content' => '["function_name":"getFinancialData", "parameters":[{"name":"userId","type":"int"},{"name":"startDate","type":"string"},{"name":"endDate","type":"string"}],"function_name":"categorizeTransactions", "parameters":[{"name":"transactions","type":"array"}],"function_name":"getTopCategories", "parameters":[{"name":"transactions","type":"array"}]]',
+            ],
+            'finish_reason' => 'stop',
+        ]
+    ],
+    'usage' => UsageData([
+        'prompt_tokens' => 1657,
+        'completion_tokens' => 97,
+        'total_tokens' => 1754,
+    ])    
+]);
+```
+
+#### Validate Function Signature
+Validates a function signature returned by the LLM. It returns **boolean** or **ErrorData** for **wrong** function signature with missing/wrong field.
+You can retrieve LLM returned functions from **ResponseData** returned by [Send Tool Use (Function Calling) Request to OpenRouter](#send-tool-use-function-calling-request-to-openrouter).
+<br/>
+Sample LLM returned functions:
+```php
+// $response = LaravelOpenRouter::chatRequest($chatData); as shown in  [Send Tool Use (Function Calling) Request to OpenRouter] section
+$responseContentData = str_replace("\n", "", (Arr::get($response->choices[0], 'message.content'))); // Get content from the response.
+$llmReturnedFunctions = json_decode($responseContentData, true); // Functions returned from LLM.
+
+// Foreach $llmReturnedFunctions and get each function to validate:
+$llmReturnedFunction = [ // Sample LLM returned function
+    "function_name" => "getFinancialData",
+    "parameters" => [
+        [ "name" => "userId", "type" => "int"],
+        [ "name" => "startDate", "type" => "string"],
+        [ "name" => "endDate", "type" => "string"],
+    ],
+    'class_name' => 'MoeMizrak\LaravelPromptAlchemist\Tests\Example'
+];
+```
+
+And this is how to **validate** a function signature returned from LLM:
+```php
+LaravelOpenRouter::validateFunctionSignature($llmReturnedFunction);
+```
+
+In case the LLM returned function signature is **invalid**, this is a sample **ErrorData** returned:
+```php
+output:
+
+ErrorData([
+    'code' => 400,
+    'message' => 'Function invalidFunctionName does not exist in class MoeMizrak\LaravelPromptAlchemist\Tests\Example'
+]);
 ```
 
 ### Using PromptAlchemistRequest Class
