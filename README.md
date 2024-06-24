@@ -85,9 +85,9 @@ OPENROUTER_DEFAULT_MODEL=default_model
 - `function_results_schema_path`: Path of the function results schema. The [Function Results Schema](#function-results-schema) section provides a deep dive into function results schema. (**e.g.** &#95;&#95;DIR&#95;&#95; . '/../resources/schemas/function_results_schema.yml')
 
 ➡️ `instructions`: Add instructions for prompt_function_instructions, function_results_instructions and generate_prompt_function_instructions.
-- `prompt_function_instructions`: Instructions for the LLM used for prompt function payload. The [Usage](#-usage) section provides a deep dive into prompt function instructions. (**e.g.** You are an AI assistant that strictly follows instructions and provides response ...)
-- `function_results_instructions`: Instructions for the LLM used for function results payload. The [Usage](#-usage) section provides a deep dive into function results instructions. (**e.g.** You will strictly follow the instructions as ...)
-- `generate_prompt_function_instructions`: Instructions for generating prompt_function_instructions by using **generateInstructions** function. The [Usage](#-usage) section provides a deep dive into generating prompt function instructions. (**e.g.** Your role is to analyze the provided "functions" and ...)
+- `prompt_function_instructions`: Instructions for the LLM used for prompt function payload. The [Generate Prompt Function Instructions](#generate-prompt-function-instructions) section provides a deep dive into prompt function instructions. (**e.g.** You are an AI assistant that strictly follows instructions and provides response ...)
+- `function_results_instructions`: Instructions for the LLM used for function results payload. The [Prepare Function Results Payload](#prepare-function-results-payload) section provides a deep dive into function results instructions. (**e.g.** You will strictly follow the instructions as ...)
+- `generate_prompt_function_instructions`: Instructions for generating prompt_function_instructions by using **generateInstructions** function. The [Generate Prompt Function Instructions](#generate-prompt-function-instructions) section provides a deep dive into generating prompt function instructions. (**e.g.** Your role is to analyze the provided "functions" and ...)
 
 ---
 ## 🎨 Usage
