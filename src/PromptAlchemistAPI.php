@@ -2,6 +2,7 @@
 
 namespace MoeMizrak\LaravelPromptAlchemist;
 
+use MoeMizrak\LaravelPromptAlchemist\Helpers\FunctionCaller;
 use MoeMizrak\LaravelPromptAlchemist\Helpers\FunctionListGenerator;
 use MoeMizrak\LaravelPromptAlchemist\Helpers\FunctionSignatureValidator;
 use MoeMizrak\LaravelPromptAlchemist\Helpers\InstructionsGenerator;
@@ -22,11 +23,13 @@ abstract class PromptAlchemistAPI
      * @param FunctionSignatureValidator $functionSignatureValidator
      * @param FunctionListGenerator $functionListGenerator
      * @param InstructionsGenerator $instructionsGenerator
+     * @param FunctionCaller $functionCaller
      */
     public function __construct(
         protected PayloadBuilder $payloadBuilder,
         protected FunctionSignatureValidator $functionSignatureValidator,
         protected FunctionListGenerator $functionListGenerator,
         protected InstructionsGenerator $instructionsGenerator,
+        protected FunctionCaller $functionCaller,
     ) {}
 }

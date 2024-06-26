@@ -27,9 +27,8 @@
         "spatie/data-transfer-object": "^3.9.1",
         "guzzlehttp/guzzle": "^7.8",
         "caseyamcl/guzzle_retry_middleware": "^2.9",
-        "moe-mizrak/laravel-openrouter": "^1.0",
-        "spatie/invade": "^2.1",
-        "phpdocumentor/reflection-docblock": "^5.4"
+        "phpdocumentor/reflection-docblock": "^5.4",
+        "moe-mizrak/laravel-openrouter": "^1.0"
     },
     "require-dev": {
         "mockery/mockery": "^1.0",
