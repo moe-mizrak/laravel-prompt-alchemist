@@ -10,6 +10,7 @@ use MoeMizrak\LaravelOpenrouter\Facades\LaravelOpenRouter;
 use MoeMizrak\LaravelOpenrouter\Types\RoleType;
 use MoeMizrak\LaravelPromptAlchemist\DTO\ErrorData;
 use MoeMizrak\LaravelPromptAlchemist\DTO\FunctionData;
+use MoeMizrak\LaravelPromptAlchemist\DTO\FunctionResultData;
 use MoeMizrak\LaravelPromptAlchemist\DTO\ParameterData;
 use MoeMizrak\LaravelPromptAlchemist\DTO\ReturnData;
 use MoeMizrak\LaravelPromptAlchemist\Facades\LaravelPromptAlchemist;
@@ -170,7 +171,7 @@ class PromptAlchemistTest extends TestCase
     {
         /* SETUP */
         $functionResults = [
-            [
+            new FunctionResultData([
                 'function_name' => 'getFinancialData',
                 'result' => [
                     'totalAmount' => 122,
@@ -181,22 +182,22 @@ class PromptAlchemistTest extends TestCase
                             'description' => 'food',
                         ],
                     ]
-                ],
-            ],
-            [
+                ]
+            ]),
+            new FunctionResultData([
                 'function_name' => 'getCreditScore',
                 'result' => [
                     'creditScore' => 0.8,
                     'summary' => 'reliable',
                 ]
-            ],
-            [
+            ]),
+            new FunctionResultData([
                 'function_name' => 'getAccountBalance',
                 'result' => [
                     'currentBalance' => 12502,
                     'status' => 'active',
                 ]
-            ],
+            ]),
         ];
 
         /* EXECUTE */
@@ -217,7 +218,7 @@ class PromptAlchemistTest extends TestCase
     {
         /* SETUP */
         $functionResults = [
-            [
+            new FunctionResultData([
                 'function_name' => 'getFinancialData',
                 'result' => [
                     'totalAmount' => 122,
@@ -228,22 +229,22 @@ class PromptAlchemistTest extends TestCase
                             'description' => 'food',
                         ],
                     ]
-                ],
-            ],
-            [
+                ]
+            ]),
+            new FunctionResultData([
                 'function_name' => 'getCreditScore',
                 'result' => [
                     'creditScore' => 0.8,
                     'summary' => 'reliable',
                 ]
-            ],
-            [
+            ]),
+            new FunctionResultData([
                 'function_name' => 'getAccountBalance',
                 'result' => [
                     'currentBalance' => 12502,
                     'status' => 'active',
                 ]
-            ],
+            ]),
         ];
         $prompt = 'Can tell me Mr. Boolean Bob credit score?';
         $content = $this->request->prepareFunctionResultsPayload($prompt, $functionResults);
@@ -774,19 +775,23 @@ class PromptAlchemistTest extends TestCase
         $llmReturnedFunctionData = $this->request->formLlmReturnedFunctionData($llmReturnedFunction);
         // $llmReturnedFunctionData should be validated before function calling
         $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunctionData);
+        // Set parameter values
+        $parameters = [
+            new ParameterData([
+                'name' => 'userId',
+                'value' => 99,
+            ]),
+            new ParameterData([
+                'name' => 'startDate',
+                'value' => '2023-06-01',
+            ]),
+            new ParameterData([
+                'name' => 'endDate',
+                'value' => '2023-07-01',
+            ]),
+        ];
         if (true === $validationResponse) {
-            // here set values of the parameter to call them
-            foreach ($llmReturnedFunctionData->parameters as $key => $parameter) {
-                if ($parameter->name == 'userId') {
-                    $llmReturnedFunctionData->parameters[$key]->value = 1;
-                }
-                if ($parameter->name == 'startDate') {
-                    $llmReturnedFunctionData->parameters[$key]->value = '2023-06-01';
-                }
-                if ($parameter->name == 'endDate') {
-                    $llmReturnedFunctionData->parameters[$key]->value = '2023-07-01';
-                }
-            }
+            $llmReturnedFunctionData->setParameterValues($parameters);
         }
 
         /* EXECUTE */
@@ -794,6 +799,7 @@ class PromptAlchemistTest extends TestCase
 
         /* ASSERT */
         $this->assertNotNull($functionResult);
+        $this->assertEquals('getFinancialData', $functionResult->function_name);
     }
 
     /**
@@ -824,16 +830,19 @@ class PromptAlchemistTest extends TestCase
         $llmReturnedFunctionData = $this->request->formLlmReturnedFunctionData($llmReturnedFunction);
         // $llmReturnedFunctionData should be validated before function calling
         $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunctionData);
+        // Set parameter values
+        $parameters = [
+            new ParameterData([
+                'name' => 'stringParam',
+                'value' => $stringValue,
+            ]),
+            new ParameterData([
+                'name' => 'intParam',
+                'value' => $intValue,
+            ]),
+        ];
         if (true === $validationResponse) {
-            // here set values of the parameter to call them
-            foreach ($llmReturnedFunctionData->parameters as $key => $parameter) {
-                if ($parameter->name == 'stringParam') {
-                    $llmReturnedFunctionData->parameters[$key]->value = $stringValue;
-                }
-                if ($parameter->name == 'intParam') {
-                    $llmReturnedFunctionData->parameters[$key]->value = $intValue;
-                }
-            }
+            $llmReturnedFunctionData->setParameterValues($parameters);
         }
 
         /* EXECUTE */
@@ -841,6 +850,6 @@ class PromptAlchemistTest extends TestCase
 
         /* ASSERT */
         $this->assertNotNull($functionResult);
-        $this->assertEquals('private return value ' . $stringValue . ' ' . $intValue, $functionResult);
+        $this->assertEquals('private return value ' . $stringValue . ' ' . $intValue, $functionResult->result);
     }
 }

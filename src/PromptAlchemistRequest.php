@@ -5,6 +5,7 @@ namespace MoeMizrak\LaravelPromptAlchemist;
 use MoeMizrak\LaravelOpenrouter\Exceptions\XorValidationException;
 use MoeMizrak\LaravelPromptAlchemist\DTO\ErrorData;
 use MoeMizrak\LaravelPromptAlchemist\DTO\FunctionData;
+use MoeMizrak\LaravelPromptAlchemist\DTO\FunctionResultData;
 use ReflectionException;
 use Spatie\DataTransferObject\Exceptions\UnknownProperties;
 
@@ -110,11 +111,11 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
      *
      * @param FunctionData $function
      *
-     * @return mixed
+     * @return FunctionResultData|ErrorData
      * @throws UnknownProperties
      * @throws ReflectionException
      */
-    public function callFunction(FunctionData $function): mixed
+    public function callFunction(FunctionData $function): FunctionResultData|ErrorData
     {
         return $this->functionCaller->call($function);
     }

@@ -1,6 +1,6 @@
 {
     "name": "moe-mizrak/laravel-prompt-alchemist",
-    "description": "Versatile LLM Tool Use (Function Calling) package for Laravel, compatible with all LLMs.",
+    "description": "Versatile LLM Tool Use (Function Calling) package for Laravel, compatible with all LLMs, enabling LLM to execute actual code functions (unlike LLMs' built-in capabilities).",
     "keywords": [
         "Moe Mizrak",
         "laravel",

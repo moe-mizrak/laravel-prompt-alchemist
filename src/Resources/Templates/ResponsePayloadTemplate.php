@@ -24,6 +24,8 @@ final class ResponsePayloadTemplate
      */
     public static function createPayload(string $prompt, string $instructions, ?array $functionResults, ?array $resultsSchema): array
     {
+        $functionResults = array_map(fn($functionResultData) => $functionResultData->toArray(), $functionResults);
+
         return [
             'prompt'                  => $prompt,
             'instructions'            => $instructions,

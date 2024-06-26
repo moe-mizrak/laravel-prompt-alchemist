@@ -56,4 +56,21 @@ class FunctionData extends DataTransferObject
      * @var string|null
      */
     public ?string $class_name;
+
+    /**
+     * Set parameter values.
+     *
+     * @param array $parameters
+     *
+     * @return void
+     */
+    public function setParameterValues(array $parameters): void
+    {
+        foreach ($this->parameters as $llmReturnedParameter) {
+            $matchingParameter = array_filter($parameters, fn($param) => $param->name === $llmReturnedParameter->name);
+            if ($matchingParameter) {
+                $llmReturnedParameter->value = current($matchingParameter)->value;
+            }
+        }
+    }
 }
