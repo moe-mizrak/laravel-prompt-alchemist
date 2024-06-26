@@ -4,6 +4,7 @@ namespace MoeMizrak\LaravelPromptAlchemist\Helpers;
 
 use MoeMizrak\LaravelPromptAlchemist\DTO\ErrorData;
 use MoeMizrak\LaravelPromptAlchemist\DTO\FunctionData;
+use MoeMizrak\LaravelPromptAlchemist\DTO\FunctionResultData;
 use ReflectionClass;
 use ReflectionException;
 use Spatie\DataTransferObject\Exceptions\UnknownProperties;
@@ -21,11 +22,11 @@ class FunctionCaller
      *
      * @param FunctionData $function
      *
-     * @return mixed
+     * @return FunctionResultData|ErrorData
      * @throws ReflectionException
      * @throws UnknownProperties
      */
-    public function call(FunctionData $function): mixed
+    public function call(FunctionData $function): FunctionResultData|ErrorData
     {
         $params = [];
         // Initialize variables.
@@ -50,6 +51,12 @@ class FunctionCaller
         $instance = $class->newInstance();
 
         // Call the function and get the result.
-        return $method->invoke($instance, ...$params);
+        $result = $method->invoke($instance, ...$params);
+
+        // Map result to DTO object
+        return new FunctionResultData([
+            'function_name' => $functionName,
+            'result'        => $result,
+        ]);
     }
 }

@@ -1,6 +1,6 @@
 
 # Laravel Prompt Alchemist
-Versatile **LLM Tool Use (Function Calling)** package for Laravel, compatible with **all LLMs**.
+Versatile **LLM Tool Use (Function Calling)** package for Laravel, compatible with **all LLMs**, enabling LLM to execute **actual code functions** (***unlike LLMs' built-in capabilities***).
 <br />
 
 [![Latest Version on Packagist](https://img.shields.io/badge/packagist-v1.0-blue)](https://packagist.org/packages/moe-mizrak/laravel-prompt-alchemist)
@@ -9,7 +9,8 @@ Versatile **LLM Tool Use (Function Calling)** package for Laravel, compatible wi
 ---
 > **Unlock Powerful Large Language Model (LLM) Interactions in Your Laravel Application.**
 
-This Laravel package enables versatile **LLM Tool Use (Function Calling)**, allowing LLMs to decide which function to call based on the prompt, compatible with **all LLMs** regardless of built-in capabilities.
+This Laravel package enables versatile **LLM Tool Use (Function Calling)**, allowing LLMs to **decide** and **execute** function calls based on the prompt.
+Unlike built-in capabilities that may only list functions, this package makes the **actual calls**, ensuring **dynamic execution**. Compatible with **all LLMs**, it enhances automation and interactivity in your applications.
 
 ## Table of Contents
 
@@ -252,25 +253,76 @@ $llmReturnedFunction = [ // Sample LLM returned function
     ],
     'class_name' => 'MoeMizrak\LaravelPromptAlchemist\Tests\Example'
 ];
+
+// Formed LLM returned function data (FunctionData).
+$llmReturnedFunctionData = LaravelPromptAlchemist::formLlmReturnedFunctionData($llmReturnedFunction);
 ```
 
-Call `validateFunctionSignature` for function signature **validation**:
+Call `validateFunctionSignature` for function signature **validation** of `$llmReturnedFunctionData`:
 ```php
-LaravelOpenRouter::validateFunctionSignature($llmReturnedFunction);
+$isValid = LaravelOpenRouter::validateFunctionSignature($llmReturnedFunctionData);
 ```
 
-- And finally in your codebase, call **functions returned from the LLM** which are necessary for answering the **prompt** (Since **function signature** is **validated**, it is now **safe** to call **LLM returned functions**).
+- And finally, call **functions returned from the LLM** which are necessary for answering the **prompt** (Since **function signature** is **validated**, it is now **safe** to call **LLM returned functions**).
 <br/>
 
-> **Note:** Automatic function calls will be available in an **upcoming release!** Stay tuned for **updates!**
+(**Note:** You need to set **parameter values** to be able to call the function. **Required parameters** have to be set, otherwise **ErrorData** is returned.)
+<br/>
+
+Set parameter values before calling function:
+```php
+// Create parameter values, you just need parameter name and its value in correct type (int, string, array, object ...)
+$parameters = [
+    new ParameterData([
+        'name' => 'userId',
+        'value' => 99, // int userId
+    ]),
+    new ParameterData([
+        'name' => 'startDate',
+        'value' => '2023-06-01', // string startDate
+    ]),
+    new ParameterData([
+        'name' => 'endDate',
+        'value' => '2023-07-01', // string endDate
+    ]),
+];
+
+if (true === $isValid) {
+    // Set parameter values
+    $llmReturnedFunctionData->setParameterValues($parameters);
+}
+```
+
+Call the function as following:
+```php
+$functionResultData = LaravelPromptAlchemist::callFunction($llmReturnedFunctionData);
+```
+
+Sample function result (**$functionResultData**) DTO object (FunctionResultData):
+```php
+output:
+
+FunctionResultData([
+    'function_name' => 'getFinancialData',
+    'result'        => (object) [
+        'totalAmount' => 1000.0,
+        'transactions' => [
+            ['amount' => 100, 'date' => '2023-01-01', 'description' => 'Groceries'],
+            ['amount' => 200, 'date' => '2023-01-02', 'description' => 'Utilities'],
+        ],
+        'message' => 'Retrieved financial data for user 99 from 2023-06-01 to 2023-07-01'
+     ],
+])
+```
+Where `function_name` is the **name of the function called** as the name suggested, and `result` is the **function call result** can be anything (void, array, object, bool etc. whatever your function return to.)
 
 - Optionally, you can also send **function results** to LLM so that regarding `function_results_schema`, it will return the answer.
   (Check [Prepare Function Results Payload](#prepare-function-results-payload) for more details)
 ```php
 $prompt = 'Can tell me Mr. Boolean Bob credit score?';
-
+$model = config('laravel-prompt-alchemist.env_variables.default_model'); // Check https://openrouter.ai/docs/models for supported models
 $functionResults = [
-    [
+    new FunctionResultData([
         'function_name' => 'getFinancialData',
         'result' => [
             'totalAmount' => 122,
@@ -281,19 +333,35 @@ $functionResults = [
                     'description' => 'food',
                 ],
             ]
-        ],
-    ],
-    [
+        ]
+    ]),
+    new FunctionResultData([
         'function_name' => 'getCreditScore',
         'result' => [
             'creditScore' => 0.8,
             'summary' => 'reliable',
         ]
-    ],
+    ]),
     ...
 ];
+// Prepare function results payload for the request.
+$content = LaravelPromptAlchemist::prepareFunctionResultsPayload($prompt, $functionResults);
 
-$response = LaravelPromptAlchemist::prepareFunctionResultsPayload($prompt, $functionResults);
+$messageData = new MessageData([
+    'content' => json_encode($content),
+    'role'    => RoleType::USER,
+]);
+
+$chatData = new ChatData([
+    'messages' => [
+        $messageData,
+    ],
+    'model'       => $model,
+    'temperature' => 0.1, // Set temperature low to get better result. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
+]);
+
+// Send OpenRouter request for function results
+$response = LaravelOpenRouter::chatRequest($chatData);
 ```
 
 Where `$response` is the `function_results_schema` formed answer returned from the LLM according to `function_results_instructions`.
@@ -856,7 +924,7 @@ Prompt which will be used for Tool Use (Function Calling):
 $prompt = 'Can tell me Mr. Boolean Bob credit score?';
 
 $functionResults = [
-    [
+    new FunctionResultData([
         'function_name' => 'getFinancialData',
         'result' => [
             'totalAmount' => 122,
@@ -867,15 +935,15 @@ $functionResults = [
                     'description' => 'food',
                 ],
             ]
-        ],
-    ],
-    [
+        ]
+    ]),
+    new FunctionResultData([
         'function_name' => 'getCreditScore',
         'result' => [
             'creditScore' => 0.8,
             'summary' => 'reliable',
         ]
-    ],
+    ]),
     ...
 ];
 ```
