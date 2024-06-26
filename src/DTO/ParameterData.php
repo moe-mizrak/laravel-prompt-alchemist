@@ -55,4 +55,11 @@ class ParameterData extends DataTransferObject
      * @var mixed|null
      */
     public mixed $default;
+
+    /**
+     * Value of the parameter if exists.
+     *
+     * @var mixed
+     */
+    public mixed $value;
 }

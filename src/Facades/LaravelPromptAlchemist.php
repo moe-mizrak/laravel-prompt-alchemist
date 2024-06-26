@@ -4,6 +4,7 @@ namespace MoeMizrak\LaravelPromptAlchemist\Facades;
 
 use Illuminate\Support\Facades\Facade;
 use MoeMizrak\LaravelPromptAlchemist\DTO\ErrorData;
+use MoeMizrak\LaravelPromptAlchemist\DTO\FunctionData;
 
 /**
  * Facade for LaravelPromptAlchemist.
@@ -13,6 +14,7 @@ use MoeMizrak\LaravelPromptAlchemist\DTO\ErrorData;
  * @method static bool|ErrorData validateFunctionSignature(array $llmReturnedFunction) Validates a function signature returned by the LLM.
  * @method static bool|ErrorData generateFunctionList(string|object $class, array $functions, string $fileName) Generates a detailed function list from a given class and writes it to a file in YAML format.
  * @method static mixed generateInstructions() Generates instructions that can be used in config prompt_function_instructions.
+ * @method static mixed callFunction(FunctionData $function) Calls function and returns the function result.
  */
 class LaravelPromptAlchemist extends Facade
 {

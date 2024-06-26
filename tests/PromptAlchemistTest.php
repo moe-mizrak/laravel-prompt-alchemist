@@ -22,6 +22,7 @@ class PromptAlchemistTest extends TestCase
 {
     private PromptAlchemistRequest $request;
     private string|object $class;
+    private string|object $exampleFinanceClass;
     private string $testYmlFileName;
 
     /**
@@ -42,6 +43,7 @@ class PromptAlchemistTest extends TestCase
             'role' => RoleType::USER,
         ]);
         $this->class = Example::class;
+        $this->exampleFinanceClass = ExampleFinance::class;
         $this->testYmlFileName = __DIR__ . '/../resources/test_functions.yml';
 
         $this->request = $this->app->make(PromptAlchemistRequest::class);
@@ -284,11 +286,13 @@ class PromptAlchemistTest extends TestCase
                 [ "name" => "startDate", "type" => "string"],
                 [ "name" => "endDate", "type" => "string"],
             ],
-            'class_name' => (string) $this->class
+            'class_name' => (string) $this->exampleFinanceClass
         ];
+        // Formed LLM returned function data (FunctionData).
+        $llmReturnedFunctionData = $this->request->formLlmReturnedFunctionData($llmReturnedFunction);
 
         /* EXECUTE */
-        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunction);
+        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunctionData);
 
         /* ASSERT */
         $this->assertTrue($validationResponse);
@@ -310,13 +314,42 @@ class PromptAlchemistTest extends TestCase
             ],
             'class_name' => $className
         ];
+        // Formed LLM returned function data (FunctionData).
+        $llmReturnedFunctionData = $this->request->formLlmReturnedFunctionData($llmReturnedFunction);
 
         /* EXECUTE */
-        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunction);
+        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunctionData);
 
         /* ASSERT */
         $this->assertEquals(400, $validationResponse->code);
         $this->assertEquals("Function signature is wrong, unexpected function name getFinancialData or class name {$className}", $validationResponse->message);
+    }
+
+    /**
+     * @test
+     */
+    public function it_responds_with_error_data_when_parameter_type_and_type_of_the_value_mismatches()
+    {
+        /* SETUP */
+        $intType = "int";
+        $invalidTypeValue = 'invalid type value';
+        $llmReturnedFunction = [
+            "function_name" => "getFinancialData",
+            "parameters" => [
+                [ "name" => "userId", "type" => $intType, 'value' => $invalidTypeValue],
+                [ "name" => "startDate", "type" => "string"],
+                [ "name" => "endDate", "type" => "string"],
+            ],
+            'class_name' => (string) $this->exampleFinanceClass
+        ];
+        $llmReturnedFunctionData = $this->request->formLlmReturnedFunctionData($llmReturnedFunction);
+
+        /* EXECUTE */
+        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunctionData);
+
+        /* ASSERT */
+        $this->assertEquals(400, $validationResponse->code);
+        $this->assertEquals('Function signature is wrong, parameter type ' . $intType . ' does NOT match with the value ' . $invalidTypeValue, $validationResponse->message);
     }
 
     /**
@@ -331,11 +364,13 @@ class PromptAlchemistTest extends TestCase
                 [ "name" => "startDate", "type" => "string"],
                 [ "name" => "endDate", "type" => "string"],
             ],
-            'class_name' => (string) $this->class
+            'class_name' => (string) $this->exampleFinanceClass
         ];
+        // Formed LLM returned function data (FunctionData).
+        $llmReturnedFunctionData = $this->request->formLlmReturnedFunctionData($llmReturnedFunction);
 
         /* EXECUTE */
-        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunction);
+        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunctionData);
 
         /* ASSERT */
         $this->assertEquals(400, $validationResponse->code);
@@ -356,11 +391,13 @@ class PromptAlchemistTest extends TestCase
                 [ "name" => "startDate", "type" => "string"],
                 [ "name" => "endDate", "type" => "string"],
             ],
-            "class_name" => (string) $this->class
+            "class_name" => (string) $this->exampleFinanceClass
         ];
+        // Formed LLM returned function data (FunctionData).
+        $llmReturnedFunctionData = $this->request->formLlmReturnedFunctionData($llmReturnedFunction);
 
         /* EXECUTE */
-        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunction);
+        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunctionData);
 
         /* ASSERT */
         $this->assertEquals(400, $validationResponse->code);
@@ -379,9 +416,11 @@ class PromptAlchemistTest extends TestCase
             "parameters" => [],
             "class_name" => (string) $this->class
         ];
+        // Formed LLM returned function data (FunctionData).
+        $llmReturnedFunctionData = $this->request->formLlmReturnedFunctionData($llmReturnedFunction);
 
         /* EXECUTE */
-        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunction);
+        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunctionData);
 
         /* ASSERT */
         $this->assertEquals(400, $validationResponse->code);
@@ -595,7 +634,7 @@ class PromptAlchemistTest extends TestCase
     /**
      * @test
      */
-    public function it_successfully_responds_with_error_data_when_invalid_function_name_is_sent_to_generate_function_list()
+    public function it_responds_with_error_data_when_invalid_function_name_is_sent_to_generate_function_list()
     {
         /* SETUP */
         // this function is for the overwriting descriptions
@@ -640,5 +679,168 @@ class PromptAlchemistTest extends TestCase
         $this->assertArrayHasKey('functions', $response);
         $this->assertArrayHasKey('function_payload_schema', $response);
         $this->assertArrayHasKey('function_payload_schema', $response);
+    }
+
+    /**
+     * @test
+     */
+    public function it_responds_with_error_data_when_parameter_value_is_missing()
+    {
+        /* SETUP */
+        $params = [];
+        $LLMReturnedFunction = [
+            "function_name" => "getFinancialData",
+            "parameters" => [
+                [
+                    "name" => "userId",
+                    "type" => "int",
+                    "required" => true
+                ],
+                [
+                    "name" => "startDate",
+                    "type" => "string",
+                    "required" => true
+                ],
+                [
+                    "name" => "endDate",
+                    "type" => "string",
+                    "required" => true
+                ]
+            ],
+            "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\ExampleFinance"
+        ];
+        // here set parameterData with value
+        foreach ($LLMReturnedFunction['parameters'] as $parameter) {
+            if ($parameter['type'] == 'int') {
+                $params[] = new ParameterData([
+                    'name' => $parameter['name'],
+                    'type' => $parameter['type'],
+                    'required' => $parameter['required'],
+                ]);
+            }
+
+            if ($parameter['type'] == 'string') {
+                $params[] = new ParameterData([
+                    'name' => $parameter['name'],
+                    'type' => $parameter['type'],
+                    'required' => $parameter['required'],
+                    'value' => 'some value',
+                ]);
+            }
+        }
+        $function = new FunctionData([
+            'function_name' => $LLMReturnedFunction['function_name'],
+            'parameters'    => $params,
+            'class_name'    => $LLMReturnedFunction['class_name']
+        ]);
+
+        /* EXECUTE */
+        $functionResult = LaravelPromptAlchemist::callFunction($function);
+
+        /* ASSERT */
+        $this->assertInstanceOf(ErrorData::class, $functionResult);
+        $this->assertEquals(400, $functionResult->code);
+        $this->assertEquals("Required value of parameter userId is missing in function " . $LLMReturnedFunction['function_name'] . " to be able to call the function", $functionResult->message);
+    }
+
+    /**
+     * @test
+     */
+    public function it_successfully_calls_function_returned_from_llm()
+    {
+        /* SETUP */
+        $llmReturnedFunction = [
+            "function_name" => "getFinancialData",
+            "parameters" => [
+                [
+                    "name" => "userId",
+                    "type" => "int",
+                    "required" => true
+                ],
+                [
+                    "name" => "startDate",
+                    "type" => "string",
+                    "required" => true
+                ],
+                [
+                    "name" => "endDate",
+                    "type" => "string",
+                    "required" => true
+                ]
+            ],
+            "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\ExampleFinance"
+        ];
+        // Formed LLM returned function data (FunctionData).
+        $llmReturnedFunctionData = $this->request->formLlmReturnedFunctionData($llmReturnedFunction);
+        // $llmReturnedFunctionData should be validated before function calling
+        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunctionData);
+        if (true === $validationResponse) {
+            // here set values of the parameter to call them
+            foreach ($llmReturnedFunctionData->parameters as $key => $parameter) {
+                if ($parameter->name == 'userId') {
+                    $llmReturnedFunctionData->parameters[$key]->value = 1;
+                }
+                if ($parameter->name == 'startDate') {
+                    $llmReturnedFunctionData->parameters[$key]->value = '2023-06-01';
+                }
+                if ($parameter->name == 'endDate') {
+                    $llmReturnedFunctionData->parameters[$key]->value = '2023-07-01';
+                }
+            }
+        }
+
+        /* EXECUTE */
+        $functionResult = LaravelPromptAlchemist::callFunction($llmReturnedFunctionData);
+
+        /* ASSERT */
+        $this->assertNotNull($functionResult);
+    }
+
+    /**
+     * @test
+     */
+    public function it_successfully_calls_private_function_returned_from_llm()
+    {
+        /* SETUP */
+        $llmReturnedFunction = [
+            "function_name" => "privateFunction",
+            "parameters" => [
+                [
+                    "name" => "stringParam",
+                    "type" => "string",
+                    "required" => true
+                ],
+                [
+                    "name" => "intParam",
+                    "type" => "int",
+                    "required" => true
+                ]
+            ],
+            "class_name" => "MoeMizrak\LaravelPromptAlchemist\Tests\Example"
+        ];
+        $intValue = 100;
+        $stringValue = 'string value';
+        // Formed LLM returned function data (FunctionData).
+        $llmReturnedFunctionData = $this->request->formLlmReturnedFunctionData($llmReturnedFunction);
+        // $llmReturnedFunctionData should be validated before function calling
+        $validationResponse = $this->request->validateFunctionSignature($llmReturnedFunctionData);
+        if (true === $validationResponse) {
+            // here set values of the parameter to call them
+            foreach ($llmReturnedFunctionData->parameters as $key => $parameter) {
+                if ($parameter->name == 'stringParam') {
+                    $llmReturnedFunctionData->parameters[$key]->value = $stringValue;
+                }
+                if ($parameter->name == 'intParam') {
+                    $llmReturnedFunctionData->parameters[$key]->value = $intValue;
+                }
+            }
+        }
+
+        /* EXECUTE */
+        $functionResult = LaravelPromptAlchemist::callFunction($llmReturnedFunctionData);
+
+        /* ASSERT */
+        $this->assertNotNull($functionResult);
+        $this->assertEquals('private return value ' . $stringValue . ' ' . $intValue, $functionResult);
     }
 }

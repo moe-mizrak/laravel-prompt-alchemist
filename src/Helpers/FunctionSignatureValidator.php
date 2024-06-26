@@ -5,7 +5,6 @@ namespace MoeMizrak\LaravelPromptAlchemist\Helpers;
 use Illuminate\Support\Arr;
 use MoeMizrak\LaravelPromptAlchemist\DTO\ErrorData;
 use MoeMizrak\LaravelPromptAlchemist\DTO\FunctionData;
-use MoeMizrak\LaravelPromptAlchemist\DTO\FunctionSignatureMappingData;
 use MoeMizrak\LaravelPromptAlchemist\DTO\ParameterData;
 use Spatie\DataTransferObject\Exceptions\UnknownProperties;
 use Symfony\Component\Yaml\Yaml;
@@ -21,21 +20,15 @@ class FunctionSignatureValidator
     /**
      * Validate function signature.
      *
-     * @param array $function
+     * @param FunctionData $llmReturnedFunctionData
      *
      * @return bool|ErrorData
      * @throws UnknownProperties
      */
-    public function signatureValidator(array $function): bool|ErrorData
+    public function signatureValidator(FunctionData $llmReturnedFunctionData): bool|ErrorData
     {
-        // Function signature mapping data (FunctionSignatureMappingData).
-        $signatureMappingData = config('laravel-prompt-alchemist.function_signature_mapping');
-
-        // Formed LLM returned function data (FunctionData).
-        $llmReturnedFunctionData = $this->formLlmReturnedFunctionData($signatureMappingData, $function);
-
         // Formed callable function data (FunctionData).
-        $callableFunctionData = $this->formCallableFunctionData($signatureMappingData, $llmReturnedFunctionData);
+        $callableFunctionData = $this->formCallableFunctionData($llmReturnedFunctionData);
 
         return $this->validate($callableFunctionData, $llmReturnedFunctionData);
     }
@@ -43,14 +36,15 @@ class FunctionSignatureValidator
     /**
      * Forms data from the function returned by the LLM based on the signature mapping.
      *
-     * @param FunctionSignatureMappingData $signatureMappingData - This is for the signature mapping (path and type info of fields in array)
      * @param array $llmReturnedFunction - This is the function that will be formed in function data.
      *
      * @return FunctionData
      * @throws UnknownProperties
      */
-    private function formLlmReturnedFunctionData(FunctionSignatureMappingData $signatureMappingData, array $llmReturnedFunction): FunctionData
+    public function formLlmReturnedFunctionData(array $llmReturnedFunction): FunctionData
     {
+        // Get the signature mapping (path and type info of fields in array)
+        $signatureMappingData = config('laravel-prompt-alchemist.function_signature_mapping');
         // LLM returned function name.
         $llmReturnedFunctionName = Arr::get($llmReturnedFunction, $signatureMappingData->function_name->path);
         // LLM returned parameters.
@@ -63,9 +57,11 @@ class FunctionSignatureValidator
         $parameters = [];
         foreach ($llmReturnedParameters as $_) {
             $parameters[] = new ParameterData([
-                'name' => Arr::get($llmReturnedFunction, $this->modifyMappingPath($signatureMappingData->parameter_name->path, $key)),
-                'type' => Arr::get($llmReturnedFunction,  $this->modifyMappingPath($signatureMappingData->parameter_type->path, $key)),
+                'name'  => Arr::get($llmReturnedFunction, $this->modifyMappingPath($signatureMappingData->parameter_name->path, $key)),
+                'type'  => Arr::get($llmReturnedFunction,  $this->modifyMappingPath($signatureMappingData->parameter_type->path, $key)),
+                'value' => Arr::get($llmReturnedFunction,  $this->modifyMappingPath($signatureMappingData->parameter_value->path, $key)),
             ]);
+
             $key++;
         }
 
@@ -80,14 +76,15 @@ class FunctionSignatureValidator
     /**
      * Forms callable function data based on the signature mapping.
      *
-     * @param FunctionSignatureMappingData $signatureMappingData - This is for the signature mapping (path and type info of fields in array)
      * @param FunctionData $llmReturnedFunctionData - This is for retrieving the correct function from function list by comparing with $llmReturnedFunctionName and $llmReturnedClassName.
      *
      * @return FunctionData
      * @throws UnknownProperties
      */
-    private function formCallableFunctionData(FunctionSignatureMappingData $signatureMappingData, FunctionData $llmReturnedFunctionData): FunctionData
+    private function formCallableFunctionData(FunctionData $llmReturnedFunctionData): FunctionData
     {
+        // Get the signature mapping (path and type info of fields in array)
+        $signatureMappingData = config('laravel-prompt-alchemist.function_signature_mapping');
         // Function list with signatures (names, parameters etc.). This is the function that will be formed in function data.
         $callableFunctions = Yaml::parseFile(config('laravel-prompt-alchemist.functions_yml_path'));
         $callableFunction = null;
@@ -189,7 +186,45 @@ class FunctionSignatureValidator
             }
         }
 
+        // Loop through the LLM returned function parameters and check if the value is in correct type. If value is not set, skip this check.
+        foreach ($llmReturnedFunctionData->parameters as $llmReturnedParameter) {
+            // Check if value is set, skip the check if not set.
+            if (isset($llmReturnedParameter->value)) {
+                // Check if parameter type and type of the value matches.
+                if (! $this->isParameterValueInCorrectType($llmReturnedParameter)) {
+                    return new ErrorData([
+                        'code'    => 400,
+                        'message' => 'Function signature is wrong, parameter type ' . $llmReturnedParameter->type . ' does NOT match with the value ' . $llmReturnedParameter->value,
+                    ]);
+                }
+            }
+        }
+
         return true;
+    }
+
+    /**
+     * Checks if parameter type and type of the value matches.
+     *
+     * @param ParameterData $llmReturnedParameter
+     *
+     * @return bool
+     */
+    private function isParameterValueInCorrectType(ParameterData $llmReturnedParameter): bool
+    {
+        $value = $llmReturnedParameter->value;
+        $type = $llmReturnedParameter->type;
+
+        return match ($type) {
+            'int'    => is_int($value),
+            'string' => is_string($value),
+            'float'  => is_float($value),
+            'bool'   => is_bool($value),
+            'array'  => is_array($value),
+            'object' => is_object($value),
+            'null'   => is_null($value),
+            default  => false,
+        };
     }
 
     /**

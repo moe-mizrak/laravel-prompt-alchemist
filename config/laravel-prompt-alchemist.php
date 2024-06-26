@@ -194,6 +194,10 @@ return [
             'path' => 'parameters[].default',
             'type' => 'mixed',
         ]),
+        'parameter_value' => new MappingData([
+            'path' => 'parameters[].value',
+            'type' => 'mixed',
+        ]),
         'class_name' => new MappingData([
             'path' => 'class_name',
             'type' => 'string',

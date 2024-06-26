@@ -4,6 +4,8 @@ namespace MoeMizrak\LaravelPromptAlchemist;
 
 use MoeMizrak\LaravelOpenrouter\Exceptions\XorValidationException;
 use MoeMizrak\LaravelPromptAlchemist\DTO\ErrorData;
+use MoeMizrak\LaravelPromptAlchemist\DTO\FunctionData;
+use ReflectionException;
 use Spatie\DataTransferObject\Exceptions\UnknownProperties;
 
 /**
@@ -48,14 +50,27 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
     /**
      * Validates a function signature returned by the LLM.
      *
-     * @param array $llmReturnedFunction
+     * @param FunctionData $llmReturnedFunctionData
      *
      * @return bool|ErrorData
      * @throws UnknownProperties
      */
-    public function validateFunctionSignature(array $llmReturnedFunction): bool|ErrorData
+    public function validateFunctionSignature(FunctionData $llmReturnedFunctionData): bool|ErrorData
     {
-        return $this->functionSignatureValidator->signatureValidator($llmReturnedFunction);
+        return $this->functionSignatureValidator->signatureValidator($llmReturnedFunctionData);
+    }
+
+    /**
+     * Forms data from the function returned by the LLM based on the signature mapping.
+     * Gives FunctionData formed result.
+     *
+     * @param array $llmReturnedFunction
+     * @return FunctionData
+     * @throws UnknownProperties
+     */
+    public function formLlmReturnedFunctionData(array $llmReturnedFunction): FunctionData
+    {
+        return $this->functionSignatureValidator->formLlmReturnedFunctionData($llmReturnedFunction);
     }
 
     /**
@@ -71,7 +86,7 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
      *
      * @return bool|ErrorData
      * @throws UnknownProperties
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function generateFunctionList(string|object $class, array $functions, string $fileName): bool|ErrorData
     {
@@ -88,5 +103,19 @@ class PromptAlchemistRequest extends PromptAlchemistAPI
     public function generateInstructions(): mixed
     {
         return $this->instructionsGenerator->generate();
+    }
+
+    /**
+     * Call the function where signature and parameter values are provided.
+     *
+     * @param FunctionData $function
+     *
+     * @return mixed
+     * @throws UnknownProperties
+     * @throws ReflectionException
+     */
+    public function callFunction(FunctionData $function): mixed
+    {
+        return $this->functionCaller->call($function);
     }
 }
