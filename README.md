@@ -111,7 +111,6 @@ OPENROUTER_DEFAULT_MODEL=default_model
 ## ⚡ Quick Usage Guide
 This package is designed to be **flexible**, but for an **easy quick start**, follow the steps below:
 - Create a file named `functions.yml` under a directory of your choice. Modify config file accordingly for `functions_yml_path`.
-<br/>
 (Check [Generate Function List](#generate-function-list) for further details).
 ```php
 'functions_yml_path' => __DIR__ . '/../resources/functions.yml', // functions.yml is located under resources folder in this example.
@@ -192,7 +191,6 @@ LaravelPromptAlchemist::generateFunctionList($class, $functions, $fileName);
 ```
 
 - Create yml file for **function payload schema** and modify `function_payload_schema_path` in **config** accordingly.
-<br/>
 (Check [Function Payload Schema](#function-payload-schema) for further details).
 <br/>
 
@@ -241,7 +239,6 @@ $response = LaravelOpenRouter::chatRequest($chatData);
 ```
 
 - **Validate** the response retrieved from **OpenRouter**.
-<br/>
 (Check [Validate Function Signature](#validate-function-signature) for further details).
 <br/>
 
@@ -272,7 +269,6 @@ $isValid = LaravelOpenRouter::validateFunctionSignature($llmReturnedFunctionData
 ```
 
 - And finally, call **functions returned from the LLM** which are necessary for answering the **prompt** (Since **function signature** is **validated**, it is now **safe** to call **LLM returned functions**).
-<br/>
 (Check [Call Function (Actual Function Call)](#call-function-actual-function-call) for further details).
 <br/>
 
@@ -329,7 +325,6 @@ FunctionResultData([
 Where `function_name` is the **name of the function called** as the name suggested, and `result` is the **function call result** can be anything (void, array, object, bool etc. whatever your function returns to.)
 
 - Optionally, you can also send **function results** to LLM so that regarding `function_results_schema`, it will return the answer.
-<br/>
 (Check [Prepare Function Results Payload](#prepare-function-results-payload) for further details)
 ```php
 $prompt = 'Can tell me Mr. Boolean Bob credit score?';
