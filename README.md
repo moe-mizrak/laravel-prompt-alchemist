@@ -3,7 +3,7 @@
 Versatile **LLM Tool Use (Function Calling)** package for Laravel, compatible with **all LLMs**, enabling LLM to execute **actual code functions** (***unlike LLMs' built-in capabilities***).
 <br />
 
-[![Latest Version on Packagist](https://img.shields.io/badge/packagist-v1.0-blue)](https://packagist.org/packages/moe-mizrak/laravel-prompt-alchemist)
+[![Latest Version on Packagist](https://img.shields.io/badge/packagist-v2.0-blue)](https://packagist.org/packages/moe-mizrak/laravel-prompt-alchemist)
 <br />
 
 ---
