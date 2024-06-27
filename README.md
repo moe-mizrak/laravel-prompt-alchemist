@@ -29,9 +29,11 @@ Unlike built-in capabilities that may only list functions, this package makes th
             - [Function Payload Schema](#function-payload-schema)
             - [Function Results Schema](#function-results-schema)
         - [Prepare Prompt Function Payload](#prepare-prompt-function-payload)
-        - [Prepare Function Results Payload](#prepare-function-results-payload)
         - [Send Tool Use (Function Calling) Request to OpenRouter](#send-tool-use-function-calling-request-to-openrouter)
         - [Validate Function Signature](#validate-function-signature)
+        - [Call Function (Actual Function Call)](#call-function-actual-function-call)
+        - [Prepare Function Results Payload](#prepare-function-results-payload)
+        - [Send Function Results to OpenRouter](#send-function-results-to-openrouter)
     - [Using PromptAlchemistRequest Class](#using-promptalchemistrequest-class)
 - [💫 Contributing](#-contributing)
 - [📜 License](#-license)
@@ -109,7 +111,8 @@ OPENROUTER_DEFAULT_MODEL=default_model
 ## ⚡ Quick Usage Guide
 This package is designed to be **flexible**, but for an **easy quick start**, follow the steps below:
 - Create a file named `functions.yml` under a directory of your choice. Modify config file accordingly for `functions_yml_path`.
-  (Check [Generate Function List](#generate-function-list) for further details).
+<br/>
+(Check [Generate Function List](#generate-function-list) for further details).
 ```php
 'functions_yml_path' => __DIR__ . '/../resources/functions.yml', // functions.yml is located under resources folder in this example.
 ```
@@ -189,7 +192,8 @@ LaravelPromptAlchemist::generateFunctionList($class, $functions, $fileName);
 ```
 
 - Create yml file for **function payload schema** and modify `function_payload_schema_path` in **config** accordingly.
-  (Check [Function Payload Schema](#function-payload-schema) for further details).
+<br/>
+(Check [Function Payload Schema](#function-payload-schema) for further details).
 <br/>
 
 Sample `function_payload_schema.yml` as:
@@ -237,7 +241,11 @@ $response = LaravelOpenRouter::chatRequest($chatData);
 ```
 
 - **Validate** the response retrieved from **OpenRouter**.
-  Sample LLM returned functions:
+<br/>
+(Check [Validate Function Signature](#validate-function-signature) for further details).
+<br/>
+
+Sample **LLM returned functions**:
 ```php
 // $response = LaravelOpenRouter::chatRequest($chatData);
 $responseContentData = str_replace("\n", "", (Arr::get($response->choices[0], 'message.content'))); // Get content from the response.
@@ -258,18 +266,22 @@ $llmReturnedFunction = [ // Sample LLM returned function
 $llmReturnedFunctionData = LaravelPromptAlchemist::formLlmReturnedFunctionData($llmReturnedFunction);
 ```
 
-Call `validateFunctionSignature` for function signature **validation** of `$llmReturnedFunctionData`:
+Invoke `validateFunctionSignature` for function signature **validation** of `$llmReturnedFunctionData`:
 ```php
 $isValid = LaravelOpenRouter::validateFunctionSignature($llmReturnedFunctionData);
 ```
 
 - And finally, call **functions returned from the LLM** which are necessary for answering the **prompt** (Since **function signature** is **validated**, it is now **safe** to call **LLM returned functions**).
 <br/>
-
-(**Note:** You need to set **parameter values** to be able to call the function. **Required parameters** have to be set, otherwise **ErrorData** is returned.)
+(Check [Call Function (Actual Function Call)](#call-function-actual-function-call) for further details).
 <br/>
 
-Set parameter values before calling function:
+(**Note:** You need to set **parameter values** to be able to call the function. **Required parameters** have to be set, otherwise **ErrorData** is returned.
+It is a **better practice** to set the parameter values as checking `validateFunctionSignature` since type of **provided values** also **gets validated** if set, but it can also be done in this step.)
+<br/>
+
+**Set parameter values** before calling function as below.
+<br/>
 ```php
 // Create parameter values, you just need parameter name and its value in correct type (int, string, array, object ...)
 $parameters = [
@@ -288,17 +300,17 @@ $parameters = [
 ];
 
 if (true === $isValid) {
-    // Set parameter values
+    // Set parameter values.
     $llmReturnedFunctionData->setParameterValues($parameters);
 }
 ```
 
-Call the function as following:
+**Call the function** as following:
 ```php
 $functionResultData = LaravelPromptAlchemist::callFunction($llmReturnedFunctionData);
 ```
 
-Sample function result (**$functionResultData**) DTO object (FunctionResultData):
+Sample function result (**$functionResultData**) DTO object:
 ```php
 output:
 
@@ -314,10 +326,11 @@ FunctionResultData([
      ],
 ])
 ```
-Where `function_name` is the **name of the function called** as the name suggested, and `result` is the **function call result** can be anything (void, array, object, bool etc. whatever your function return to.)
+Where `function_name` is the **name of the function called** as the name suggested, and `result` is the **function call result** can be anything (void, array, object, bool etc. whatever your function returns to.)
 
 - Optionally, you can also send **function results** to LLM so that regarding `function_results_schema`, it will return the answer.
-  (Check [Prepare Function Results Payload](#prepare-function-results-payload) for more details)
+<br/>
+(Check [Prepare Function Results Payload](#prepare-function-results-payload) for further details)
 ```php
 $prompt = 'Can tell me Mr. Boolean Bob credit score?';
 $model = config('laravel-prompt-alchemist.env_variables.default_model'); // Check https://openrouter.ai/docs/models for supported models
@@ -597,11 +610,11 @@ Also note that fields added to **FunctionData** DTO **overwrite** the existing p
 (Basically if a field is added to **FunctionData** DTO, it is taken into account; if a field is NOT added to FunctionData and exists in function declaration then this predefined description/field is added to function list).  
 
 #### Define Function Signature Mapping
-Based on the function list (functions.yml), align your naming practices for functions with the package format for integration. 
-It is better practice to set all possible fields for function signature (`FunctionSignatureMappingData`) for better performance since more info provided for LLM means better result.
+Based on the **function list (functions.yml)**, align **your naming practices** for functions with the **package format for integration**. 
+It is better practice to set **all possible fields** for function signature (`FunctionSignatureMappingData`) for **better performance** since **more info** provided for LLM means **better result**.
 <br/>
 
-`function_signature_mapping` needs to be defined in the configuration file as following examples:
+`function_signature_mapping` needs to be defined in the **config file** as following examples:
 <br/>
 
 (As shown in examples below, use `'[]'` for the arrays. In package, it is replaced with the index key as e.g. `parameters[].name` becomes `parameters.{key}.name` which is `parameters.0.name` for the first array index, `parameters.1.name` for the second etc.)
@@ -737,13 +750,13 @@ Regarding these 2 examples, you can define your `function_signature_mapping` in 
 This section defines the instructions which gives **strict description** of **desired format answers** and how LLM provider will process provided prompt, schemas etc.
 <br/>
 
-You can use your own created/generated instructions for `prompt_function_instructions`, or use `generateInstructions` method.
+You can use your **own created/generated instructions** for `prompt_function_instructions`, or use `generateInstructions` method.
 <br/>
 
-`generateInstructions` method simply generates customized instructions regarding your **function list** (`functions.yml`), **function payload schema** (`function_payload_schema.yml`) and **prompt for generating instructions** (`generate_prompt_function_instructions` in **config**).
+`generateInstructions` method simply generates **customized instructions** regarding your **function list** (`functions.yml`), **function payload schema** (`function_payload_schema.yml`) and **prompt for generating instructions** (`generate_prompt_function_instructions` in **config**).
 <br/>
 
-(**Note:** `generate_prompt_function_instructions` is the prompt/instructions in **config** that describe how to generate specific/customized instructions with **functions** and **function_payload_schema**)
+(**Note:** `generate_prompt_function_instructions` is the prompt/instructions in **config** that describe how to **generate specific/customized instructions** with **functions** and **function_payload_schema**)
 <br/>
 
 Sample `generate_prompt_function_instructions` for `generateInstructions` call:
@@ -791,11 +804,11 @@ You are an AI assistant that strictly follows instructions and provides response
 #### Define Schemas
 This section defines the desired schema samples that are used for formatting the **function payload** and **function results**.
 Basically schemas are for deciding the **response format of LLM**.
-They are sent to LLM along with other info (prompt, functions - function results, instructions etc.) and in instructions LLM asked to give results as same format as in schema provided.
-In this way, LLM response can be resolved in package so that it can be used for Tool Use (Function Calling).
+They are sent to LLM along with other info (prompt, functions - function results, instructions etc.) and in instructions LLM asked to give results as **same format** as in schema provided.
+In this way, LLM response can be resolved in package so that it can be used for **Tool Use (Function Calling)**.
 
 ##### Function Payload Schema
-Schema that defines the structure of the function payload.
+Schema that defines the **structure of the function payload**.
 - Create yml file for function payload schema with any preferred naming and directory, add it to config file under `schemas`.
 ```php
 'schemas' => [
@@ -816,10 +829,10 @@ because LLM response will depend on this schema and response will be **validated
 ```
 
 ##### Function Results Schema
-Schema that defines the structure of the function results. This schema is for deciding the final response where function results are sent to LLM to form the response after Tool Use (Function Calling).
+Schema that defines the **structure of the function results**. This schema is for deciding the **final response** where **function results** are sent to LLM to form the response after **Tool Use (Function Calling)**.
 <br/>
 
-This schema is not required if you will not be sending Tool Use (Function Calling) results to LLM. You might prefer using function results in your codebase to derive a response directly.
+This schema is not required if you will not be sending **function call** results to LLM. You might prefer using **function results** in **your codebase** to derive a response directly.
 - Create yml file for function results schema with any preferred naming and directory, add it to config file under `schemas`.
 ```php
 'schemas' => [
@@ -913,117 +926,6 @@ And this is the expected prepared payload response sample:
 ]
 ```
 
-#### Prepare Function Results Payload
-This method is responsible for creating a structured payload template based on a given prompt and a list of functions (functions.yml) which later will be sent to an LLM provider.
-This method constructs an array containing **instructions**, the **prompt**, a **list of functions**, and a **function payload schema**.
-The instructions detail how the prompt should be processed, ensuring the response strictly adheres to the provided format.
-<br/>
-
-Prompt which will be used for Tool Use (Function Calling):
-```php
-$prompt = 'Can tell me Mr. Boolean Bob credit score?';
-
-$functionResults = [
-    new FunctionResultData([
-        'function_name' => 'getFinancialData',
-        'result' => [
-            'totalAmount' => 122,
-            'transactions' => [
-                [
-                    'amount'      => 12,
-                    'date'        => '2023-02-02',
-                    'description' => 'food',
-                ],
-            ]
-        ]
-    ]),
-    new FunctionResultData([
-        'function_name' => 'getCreditScore',
-        'result' => [
-            'creditScore' => 0.8,
-            'summary' => 'reliable',
-        ]
-    ]),
-    ...
-];
-```
-This is how you can call prepareFunctionResultsPayload method by using facade:
-```php
-LaravelPromptAlchemist::prepareFunctionResultsPayload($prompt, $functionResults);
-```
-And this is the expected prepared payload response sample:
-```php
-[
-  "prompt" => "Can tell me Mr. Boolean Bob credit score?",
-  "instructions" => "You will strictly follow the instructions:\n
-    - Understand the provided prompt and answer the prompt using the function_results (needed info is provided in function_results). If function_results are not sufficient enough, then your answer will be \"Please provide more information about [missing information]\"\n
-    - Respond based on the function_results_schema sample provided (Do not add any extra info, exactly the same format provided in function_results_schema).\n
-    - Format the response as an array following  ...",
-  "function_results" => [
-    [
-        "function_name" => "getFinancialData",
-        "result" => [
-            "totalAmount" => 122,
-            "transactions" => [
-                [
-                "amount" => 12,
-                "date" => "2023-02-02",
-                "description" => "food"
-                ]
-            ]
-        ]
-    ],
-    [
-        "function_name" => "getCreditScore",
-        "result" => [
-            "creditScore" => 0.8,
-            "summary" => "reliable"
-        ]
-    ]
-    ...
-  ],
-  "function_results_schema" => [
-    [
-        "function_name" => "getFinancialData",
-        "result" => [
-            [
-                "name" => "transactions",
-                "type" => "array",
-                "value" => [
-                    [
-                        "amount" => null,
-                        "date" => "2023-02-02",
-                        "description" => "shoes"
-                    ]
-                ]
-            ],
-            [
-                "name" => "totalAmount",
-                "type" => "int",
-                "value" => 1234
-            ]
-      ]
-    ],
-    [
-        "function_name" => "getCreditScore",
-        "result" => [
-            [
-                "name" => "creditScore",
-                "type" => "float",
-                "value" => 0.5
-            ],
-            [
-                "name" => "summary",
-                "type" => "string",
-                "value" => "reliable"
-            ]
-        ]
-    ]
-    ...
-  ]
-]
-```
-
 #### Send Tool Use (Function Calling) Request to OpenRouter
 Since this package is designed in a **flexible** way, you may use [Laravel OpenRouter](https://github.com/moe-mizrak/laravel-openrouter) (please check out **OpenRouter** github repository for more information)
 which is used as the **default LLM provider** for this package, or you may use **any other LLM provider** with this package to send Tool Use (Function Calling) request.
@@ -1098,11 +1000,32 @@ $llmReturnedFunction = [ // Sample LLM returned function
     ],
     'class_name' => 'MoeMizrak\LaravelPromptAlchemist\Tests\Example'
 ];
+
+// Form LLM returned function data (FunctionData).
+$llmReturnedFunctionData = $this->request->formLlmReturnedFunctionData($llmReturnedFunction);
+
+// Add parameter values if exists, only name and value of the parameter are set.
+$parameters = [
+    new ParameterData([
+        'name' => 'userId',
+        'value' => 99,
+    ]),
+    new ParameterData([
+        'name' => 'startDate',
+        'value' => '2023-06-01',
+    ]),
+    new ParameterData([
+        'name' => 'endDate',
+        'value' => '2023-07-01',
+    ]),
+];
+// Set parameter values in $llmReturnedFunctionData DTO
+$llmReturnedFunctionData->setParameterValues($parameters);
 ```
 
-And this is how to **validate** a function signature returned from LLM:
+And this is how to **validate** a function signature returned from LLM (**formed llm returned function** as above, also **values are set** for parameters):
 ```php
-LaravelOpenRouter::validateFunctionSignature($llmReturnedFunction);
+$isValid = LaravelOpenRouter::validateFunctionSignature($llmReturnedFunctionData); // $isValid is bool or ErrorData
 ```
 
 In case the LLM returned function signature is **invalid**, this is a sample **ErrorData** returned:
@@ -1112,6 +1035,229 @@ output:
 ErrorData([
     'code' => 400,
     'message' => 'Function invalidFunctionName does not exist in class MoeMizrak\LaravelPromptAlchemist\Tests\Example'
+]);
+```
+
+#### Call Function (Actual Function Call)
+This method make **actual function call** with provided function signatures along with values for parameters.
+Since [Validate Function Signature](#validate-function-signature) is **performed before** this step, function signature is **safe** to make this function call (Also **parameter values are set** in [Validate Function Signature](#validate-function-signature) step).
+Regardless of the function visibility (**private**, **protected**, **public** etc.), function can be called **directly**.
+<br/>
+
+> This package makes **actual function calls** unlike built-in capabilities of LLMs that may only list functions.
+> Basically with this package, you can get the **list of the functions** regarding your prompt from LLM, and then **make an actual function calls** to retrieve **function results**.
+
+This is how to `call function`:
+```php
+$functionResult = LaravelPromptAlchemist::callFunction($llmReturnedFunctionData);
+```
+
+Result is returned as `FunctionResultData` DTO object as a sample result given below:
+```php
+output:
+
+FunctionResultData([
+    'function_name' => 'getFinancialData',
+    'result' => [
+        'totalAmount' => 122,
+        'transactions' => [
+            [
+                'amount'      => 12,
+                'date'        => '2023-02-02',
+                'description' => 'food',
+            ],
+        ]
+    ]
+]),
+```
+Where `function_name` is the **name of the function called**, `result` is whatever this **function returns** (array, bool, int, mixed, object, void etc.)
+
+#### Prepare Function Results Payload
+This method is responsible for creating a structured payload template based on a given prompt and a **function results** which later will be sent to an LLM provider.
+This method constructs an array containing **instructions**, the **prompt**, a **function results**, and a **function results schema**.
+The instructions detail how the prompt should be processed, ensuring the response strictly adheres to the provided format as **function results schema**.
+<br/>
+
+Prompt which will be used for **function results payload** preparation:
+```php
+$prompt = 'Can tell me Mr. Boolean Bob credit score?';
+
+$functionResults = [
+    new FunctionResultData([
+        'function_name' => 'getFinancialData',
+        'result' => [
+            'totalAmount' => 122,
+            'transactions' => [
+                [
+                    'amount'      => 12,
+                    'date'        => '2023-02-02',
+                    'description' => 'food',
+                ],
+            ]
+        ]
+    ]),
+    new FunctionResultData([
+        'function_name' => 'getCreditScore',
+        'result' => [
+            'creditScore' => 0.8,
+            'summary' => 'reliable',
+        ]
+    ]),
+    ...
+];
+```
+This is how you can call prepareFunctionResultsPayload method by using facade:
+```php
+LaravelPromptAlchemist::prepareFunctionResultsPayload($prompt, $functionResults);
+```
+And this is the expected prepared function results payload sample:
+```php
+[
+  "prompt" => "Can tell me Mr. Boolean Bob credit score?",
+  "instructions" => "You will strictly follow the instructions:\n
+    - Understand the provided prompt and answer the prompt using the function_results (needed info is provided in function_results). If function_results are not sufficient enough, then your answer will be \"Please provide more information about [missing information]\"\n
+    - Respond based on the function_results_schema sample provided (Do not add any extra info, exactly the same format provided in function_results_schema).\n
+    - Format the response as an array following  ...",
+  "function_results" => [
+    [
+        "function_name" => "getFinancialData",
+        "result" => [
+            "totalAmount" => 122,
+            "transactions" => [
+                [
+                "amount" => 12,
+                "date" => "2023-02-02",
+                "description" => "food"
+                ]
+            ]
+        ]
+    ],
+    [
+        "function_name" => "getCreditScore",
+        "result" => [
+            "creditScore" => 0.8,
+            "summary" => "reliable"
+        ]
+    ]
+    ...
+  ],
+  "function_results_schema" => [
+    [
+        "function_name" => "getFinancialData",
+        "result" => [
+            [
+                "name" => "transactions",
+                "type" => "array",
+                "value" => [
+                    [
+                        "amount" => null,
+                        "date" => "2023-02-02",
+                        "description" => "shoes"
+                    ]
+                ]
+            ],
+            [
+                "name" => "totalAmount",
+                "type" => "int",
+                "value" => 1234
+            ]
+      ]
+    ],
+    [
+        "function_name" => "getCreditScore",
+        "result" => [
+            [
+                "name" => "creditScore",
+                "type" => "float",
+                "value" => 0.5
+            ],
+            [
+                "name" => "summary",
+                "type" => "string",
+                "value" => "reliable"
+            ]
+        ]
+    ]
+    ...
+  ]
+]
+```
+
+#### Send Function Results to OpenRouter
+Since this package is designed in a flexible way, you may use Laravel OpenRouter 
+(please check out OpenRouter github repository for more information) which is used as the default LLM provider for this package,
+or you may use any other LLM provider with this package to send Tool Use (Function Calling) request.
+<br/>
+This is the sample OpenRouter request for **function results**:
+```php
+$prompt = 'Can tell me Mr. Boolean Bob credit score?';
+$functionResults = [
+    new FunctionResultData([
+        'function_name' => 'getFinancialData',
+        'result' => [
+            'totalAmount' => 122,
+            'transactions' => [
+                [
+                    'amount'      => 12,
+                    'date'        => '2023-02-02',
+                    'description' => 'food',
+                ],
+            ]
+        ]
+    ]),
+    new FunctionResultData([
+        'function_name' => 'getCreditScore',
+        'result' => [
+            'creditScore' => 0.8,
+            'summary' => 'reliable',
+        ]
+    ]),
+    ...
+];
+$content = LaravelPromptAlchemist::prepareFunctionResultsPayload($prompt, $functionResults);
+$model = config('laravel-prompt-alchemist.env_variables.default_model'); // Check https://openrouter.ai/docs/models for supported models
+
+$messageData = new MessageData([
+    'content' => json_encode($content),
+    'role'    => RoleType::USER,
+]);
+
+$chatData = new ChatData([
+    'messages' => [
+        $messageData,
+    ],
+    'model'       => $model,
+    'temperature' => 0.1, // Set temperature low to get better result. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
+]);
+
+// Send OpenRouter request
+$response = LaravelOpenRouter::chatRequest($chatData);
+```
+
+Sample Laravel OpenRouter response (ResponseData is returned):
+```php
+output:
+
+ResponseData([
+    'id' => 'gen-YFd68mMgTkrfHVvkdemwYxdGSfZA',
+    'model' => 'mistralai/mistral-7b-instruct:free',
+    'object' => 'chat.completion',
+    'created' => 1719440793,
+    'choices' => [
+        0 => [
+            'index' => 0,
+            'message' => [
+                'role' => 'assistant',
+                'content' => '[{"name": "creditScore", "type": "float", "value": 0.8}, {"name": "summary", "type": "string", "value": "reliable"}]',
+            ],
+            'finish_reason' => 'stop',
+        ]
+    ],
+    'usage' => UsageData([
+        'prompt_tokens' => 657,
+        'completion_tokens' => 69,
+        'total_tokens' => 726,
+    ])    
 ]);
 ```
 
@@ -1125,14 +1271,17 @@ While everything else stays same with the [Using Facade](#using-facade), with `P
 // generateFunctionList request.
 $this->promptAlchemistRequest->generateFunctionList($class, $functions, $fileName);
 
-// Validate function signature returned by the LLM request.
-$this->promptAlchemistRequest->validateFunctionSignature($llmReturnedFunction);
-
 // Generate instructions request.
 $this->promptAlchemistRequest->generateInstructions();
 
 // Prepare prompt function payload request.
 $this->promptAlchemistRequest->preparePromptFunctionPayload($prompt);
+
+// Validate function signature returned by the LLM request.
+$this->promptAlchemistRequest->validateFunctionSignature($llmReturnedFunctionData); // $isValid is bool or ErrorData
+
+// Forms LLM returned function into the FunctionData
+$this->promptAlchemistRequest->formLlmReturnedFunctionData($llmReturnedFunction);
 
 // Prepare function results payload request.
 $this->promptAlchemistRequest->prepareFunctionResultsPayload($prompt, $functionResults);
