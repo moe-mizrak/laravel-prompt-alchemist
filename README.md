@@ -1272,11 +1272,14 @@ $this->promptAlchemistRequest->generateInstructions();
 // Prepare prompt function payload request.
 $this->promptAlchemistRequest->preparePromptFunctionPayload($prompt);
 
+// Forms LLM returned function into the FunctionData.
+$this->promptAlchemistRequest->formLlmReturnedFunctionData($llmReturnedFunction);
+
 // Validate function signature returned by the LLM request.
 $this->promptAlchemistRequest->validateFunctionSignature($llmReturnedFunctionData); // $isValid is bool or ErrorData
 
-// Forms LLM returned function into the FunctionData
-$this->promptAlchemistRequest->formLlmReturnedFunctionData($llmReturnedFunction);
+// Make an actual function call.
+$this->promptAlchemistRequest->callFunction($llmReturnedFunctionData);
 
 // Prepare function results payload request.
 $this->promptAlchemistRequest->prepareFunctionResultsPayload($prompt, $functionResults);
